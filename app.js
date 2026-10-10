@@ -807,6 +807,7 @@ function finishAddManual(item, gName) {
     db[currentS].groups[gName].push(item);
     save();
     if (typeof populateGroupDatalist === 'function') populateGroupDatalist();
+    if (typeof renderDropdown === 'function') renderDropdown();
     showToast('Elemento aggiunto con successo!', 'success');
     
     // Pulisci i campi del form
