@@ -523,10 +523,14 @@ function renderItem() {
     const item = currentList[currentIdx];
     updateProgress();
 
-    // 2. Prepariamo l'HTML dell'immagine se presente
+   // 2. Prepariamo l'HTML dell'immagine (sia se caricata come file, sia se inserita come link web)
     let imgHtml = '';
+    const isImageUrl = item.q && (item.q.startsWith('http://') || item.q.startsWith('https://')) && (item.q.match(/\.(jpeg|jpg|png|webp|gif)/i) || item.q.includes('encrypted-tbn0.gstatic.com') || item.q.includes('images'));
+
     if (item.image) {
         imgHtml = '<div style="margin: 14px 0; text-align: center;"><img src="' + item.image + '" style="max-width: 100%; max-height: 260px; border-radius: 8px; border: 1px solid var(--glass-border); object-fit: contain;" alt="Allegato appunti"></div>';
+    } else if (isImageUrl) {
+        imgHtml = '<div style="margin: 14px 0; text-align: center;"><img src="' + item.q + '" style="max-width: 100%; max-height: 260px; border-radius: 8px; border: 1px solid var(--glass-border); object-fit: contain;" alt="Immagine web"></div>';
     }
 
     if (currentA === 'flashcard') {
