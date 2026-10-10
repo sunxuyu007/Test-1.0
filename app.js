@@ -96,34 +96,40 @@ function handleLogin() {
 // ===== DASHBOARD =====
 function renderDash() {
     const g = document.getElementById('main-grid');
-    if (!g) return;
     g.innerHTML = "";
-    
-    // Controlla che db esista e abbia dei corsi
-    if (!db) db = {};
-
     Object.keys(db).forEach(function(m) {
-        if (!db[m] || !db[m].groups) db[m] = { groups: {} };
-        
-        const totalItems = Object.values(db[m].groups).reduce(function(s, arr) { 
-            return s + (Array.isArray(arr) ? arr.length : 0); 
+        const totalItems = Object.values(db[m].groups || {}).reduce(function(s, arr) { 
+            return s + arr.length; 
         }, 0);
-        const groupCount = Object.keys(db[m].groups).length;
+        const groupCount = Object.keys(db[m].groups || {}).length;
 
         const card = document.createElement('div');
         card.className = 'card';
         card.onclick = function() { openSub(m); };
 
         card.innerHTML =
-            '<div style="display: flex; justify-content: space-between; align-items: flex-start;">' +
-                '<h3 style="font-size:1.3rem; margin-bottom:4px;">' + m + '</h3>' +
-                '<button class="delete-btn" title="Elimina corso" onclick="event.stopPropagation(); deleteCourse(\'' + m.replace(/'/g, "\\'") + '\')">🗑️</button>' +
-            '</div>' +
+            '<h3 style="font-size:1.3rem; margin-bottom:4px;">' + m + '</h3>' +
             '<div class="counter-pill"><span class="counter-dot"></span>' +
             groupCount + ' Argomenti · ' + totalItems + ' Elementi</div>';
 
         g.appendChild(card);
     });
+
+    // --- CARD AGGIUNGI CORSO ---
+    const addCard = document.createElement('div');
+    addCard.className = 'card';
+    addCard.style.border = '2px dashed var(--glass-border-hover)';
+    addCard.style.display = 'flex';
+    addCard.style.flexDirection = 'column';
+    addCard.style.alignItems = 'center';
+    addCard.style.justifyContent = 'center';
+    addCard.onclick = function() { addNewCourse(); };
+    addCard.innerHTML =
+        '<div class="card-icon icon-settings" style="width:40px; height:40px; font-size:1.2rem; margin-bottom:8px;">➕</div>' +
+        '<h3 style="font-size:1.1rem;">Aggiungi Corso</h3>' +
+        '<p>Crea una nuova materia da studiare</p>';
+    g.appendChild(addCard);
+}
 
     // --- CARD AGGIUNGI CORSO ---
     const addCard = document.createElement('div');
