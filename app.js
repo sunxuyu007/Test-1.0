@@ -558,19 +558,31 @@ function renderItem() {
         for (let i = 0; i < opts.length; i++) {
             let cls = 'quiz-option';
             let extra = '';
+            let checkedAttr = '';
+            
             if (answered !== null) {
                 extra = ' disabled';
                 if (opts[i].isCorrect) cls += ' correct';
-                else if (answered === opts[i].origIdx) cls += ' wrong';
+                else if (Array.isArray(answered) && answered.includes(opts[i].origIdx)) cls += ' wrong';
+            } else if (Array.isArray(answered) && answered.includes(opts[i].origIdx)) {
+                checkedAttr = 'checked';
             }
-            optHtml += '<button class="' + cls + extra + '" data-idx="' + opts[i].origIdx + '" data-correct="' + opts[i].isCorrect + '" onclick="answerQuiz(' + opts[i].origIdx + ', ' + opts[i].isCorrect + ', this)">' + opts[i].text + '</button>';
+
+            // Usiamo un design pulito con checkbox interattive per quiz a risposta multipla
+            optHtml += '<div class="quiz-option-checkbox-row ' + cls + '" style="display:flex; align-items:center; gap:12px; padding:12px 16px; background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:12px; margin-bottom:8px; cursor:pointer;" onclick="toggleQuizCheckbox(this)">' +
+                '<input type="checkbox" class="quiz-cb" value="' + opts[i].origIdx + '" data-correct="' + opts[i].isCorrect + '" ' + checkedAttr + (answered !== null ? ' disabled' : '') + ' style="width:20px; height:20px; cursor:pointer;">' +
+                '<span style="flex:1; font-size:1rem;">' + opts[i].text + '</span>' +
+                '</div>';
         }
 
+        const btnState = answered !== null ? 'style="display:none;"' : '';
         container.innerHTML =
             '<div class="exercise-card">' +
             '<span class="badge">' + item.gRef + '</span>' +
             '<h3 style="font-size:1.15rem; margin:10px 0 20px; line-height:1.5;">' + item.q + '</h3>' +
-            optHtml + '</div>';
+            optHtml +
+            '<button class="btn" id="btn-submit-quiz" onclick="submitMultipleQuiz()" ' + btnState + ' style="margin-top:15px; width:100%;">Conferma Risposta 🎯</button>' +
+            '</div>';
     }
 }
 
@@ -718,13 +730,28 @@ function addManual() {
     const q = qInput ? qInput.trim() : "";
     if (!q) { showToast('Inserisci il testo della domanda', 'error'); return; }
     
-    let item = { type: type, q: q, enabled: true };
+   let item = { type: type, q: q, enabled: true };
     if (type === 'quiz') {
-        const correct = document.getElementById('q-c').value.trim();
-        const w1 = document.getElementById('q-w1').value.trim();
-        const w2 = document.getElementById('q-w2').value.trim();
-        if (!correct || !w1 || !w2) { showToast('Compila tutte le risposte', 'error'); return; }
-        item.options = [{ text: correct, isCorrect: true }, { text: w1, isCorrect: false }, { text: w2, isCorrect: false }];
+        const optionRows = document.querySelectorAll('.quiz-option-row');
+        const options = [];
+        
+        optionRows.forEach(function(row) {
+            const text = row.querySelector('.opt-text').value.trim();
+            const isCorrect = row.querySelector('.opt-correct').checked;
+            if (text) {
+                options.push({ text: text, isCorrect: isCorrect });
+            }
+        });
+        
+        if (options.length < 2) {
+            showToast('Inserisci almeno 2 opzioni di risposta', 'error');
+            return;
+        }
+        if (!options.some(function(o) { return o.isCorrect; })) {
+            showToast('Seleziona almeno una risposta corretta', 'error');
+            return;
+        }
+        item.options = options;
     } else { 
         const aInput = document.getElementById('add-a').value;
         item.a = aInput; 
@@ -850,4 +877,94 @@ function populateGroupDatalist() {
         option.value = gName;
         datalist.appendChild(option);
     });
+}
+
+// ===== GESTIONE OPZIONI DINAMICHE MANUALI =====
+function addQuizOptionRow(text = "", isCorrect = false) {
+    const container = document.getElementById('quiz-options-container');
+    if (!container) return;
+    
+    const row = document.createElement('div');
+    row.className = 'quiz-option-row';
+    row.style.cssText = 'display: flex; gap: 8px; align-items: center;';
+    
+    row.innerHTML = 
+        '<input type="checkbox" class="opt-correct" ' + (isCorrect ? 'checked' : '') + ' title="Segna come corretta" style="width: 20px; height: 20px; cursor: pointer;">' +
+        '<input type="text" class="opt-text" value="' + text.replace(/"/g, '&quot;') + '" placeholder="Scrivi opzione..." style="flex: 1; margin-bottom: 0;">' +
+        '<button type="button" class="delete-btn" onclick="this.parentElement.remove()" title="Rimuovi opzione">✕</button>';
+    
+    container.appendChild(row);
+}
+
+function toggleQuizCheckbox(row) {
+    if (sessionAnswered[currentIdx] !== null) return;
+    const cb = row.querySelector('.quiz-cb');
+    if (event.target !== cb) {
+        cb.checked = !cb.checked;
+    }
+}
+
+function submitMultipleQuiz() {
+    if (sessionAnswered[currentIdx] !== null) return;
+    
+    const checkboxes = document.querySelectorAll('.quiz-cb');
+    const selectedIndices = [];
+    let allCorrect = true;
+    let hasSelection = false;
+
+    checkboxes.forEach(function(cb) {
+        const isSelected = cb.checked;
+        const isCorrect = cb.getAttribute('data-correct') === 'true';
+        const idx = parseInt(cb.value);
+
+        if (isSelected) {
+            hasSelection = true;
+            selectedIndices.push(idx);
+        }
+
+        // Condizione di correttezza: deve aver selezionato tutte le corrette e nessuna errata
+        if (isSelected !== isCorrect) {
+            allCorrect = false;
+        }
+    });
+
+    if (!hasSelection) {
+        showToast('Seleziona almeno una risposta', 'error');
+        return;
+    }
+
+    sessionAnswered[currentIdx] = selectedIndices;
+    if (allCorrect) sessionScore++;
+    
+    const scoreText = document.getElementById('score-text');
+    if (scoreText) scoreText.innerText = sessionScore + '/' + sessionTotal;
+
+    // Evidenzia visivamente le risposte corrette e sbagliate
+    checkboxes.forEach(function(cb) {
+        cb.disabled = true;
+        const row = cb.closest('.quiz-option-checkbox-row');
+        const isCorrect = cb.getAttribute('data-correct') === 'true';
+        if (isCorrect) {
+            row.style.borderColor = 'var(--success)';
+            row.style.background = 'rgba(16, 185, 129, 0.1)';
+        } else if (cb.checked) {
+            row.style.borderColor = 'var(--danger)';
+            row.style.background = 'rgba(239, 68, 68, 0.1)';
+        }
+    });
+
+    const submitBtn = document.getElementById('btn-submit-quiz');
+    if (submitBtn) submitBtn.style.display = 'none';
+
+    if (allCorrect) showToast('Risposta corretta!', 'success');
+    else showToast('Risposta errata!', 'error');
+
+    quizAutoAdvance = setTimeout(function() {
+        quizAutoAdvance = null;
+        if (currentIdx < currentList.length - 1) {
+            nextItem();
+        } else {
+            showResults();
+        }
+    }, 2000);
 }
