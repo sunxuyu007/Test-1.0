@@ -522,15 +522,19 @@ function renderItem() {
     // 1. Dichiariamo prima l'elemento corrente
     const item = currentList[currentIdx];
     updateProgress();
-
-   // 2. Prepariamo l'HTML dell'immagine (sia se caricata come file, sia se inserita come link web)
+    
+// Prepariamo l'HTML dell'immagine con stili corretti e ben visibili
     let imgHtml = '';
     const isImageUrl = item.q && (item.q.startsWith('http://') || item.q.startsWith('https://')) && (item.q.match(/\.(jpeg|jpg|png|webp|gif)/i) || item.q.includes('encrypted-tbn0.gstatic.com') || item.q.includes('images'));
 
     if (item.image) {
-        imgHtml = '<div style="margin: 14px 0; text-align: center;"><img src="' + item.image + '" style="max-width: 100%; max-height: 260px; border-radius: 8px; border: 1px solid var(--glass-border); object-fit: contain;" alt="Allegato appunti"></div>';
+        imgHtml = '<div style="margin: 15px 0; text-align: center; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 12px; border: 1px solid var(--glass-border);">' +
+                  '<img src="' + item.image + '" style="max-width: 100%; max-height: 350px; border-radius: 8px; object-fit: contain; display: block; margin: 0 auto;" alt="Allegato">' +
+                  '</div>';
     } else if (isImageUrl) {
-        imgHtml = '<div style="margin: 14px 0; text-align: center;"><img src="' + item.q + '" style="max-width: 100%; max-height: 260px; border-radius: 8px; border: 1px solid var(--glass-border); object-fit: contain;" alt="Immagine web"></div>';
+        imgHtml = '<div style="margin: 15px 0; text-align: center; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 12px; border: 1px solid var(--glass-border);">' +
+                  '<img src="' + item.q + '" style="max-width: 100%; max-height: 350px; border-radius: 8px; object-fit: contain; display: block; margin: 0 auto;" alt="Immagine web">' +
+                  '</div>';
     }
 
     if (currentA === 'flashcard') {
