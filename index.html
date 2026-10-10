@@ -126,7 +126,10 @@
         <div class="panel">
             <h4>&#10133; Aggiungi Manualmente</h4>
             <select id="add-type"><option value="flashcard">Flashcard</option><option value="quiz">Quiz</option><option value="esercizio">Esercizio Svolto</option></select>
-            <input type="text" id="add-group" placeholder="Sottogruppo (es. Cap 1. Matrici)">
+            <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px;">
+    <input type="text" id="add-group" list="group-options" placeholder="Seleziona o scrivi Sottogruppo..." style="flex: 1;">
+    <datalist id="group-options"></datalist>
+</div>
             <textarea id="add-q" placeholder="Testo domanda o esercizio..." rows="3"></textarea>
             <textarea id="add-a" placeholder="Risposta o Svolgimento completo..." rows="3"></textarea>
             <div id="quiz-fields" style="display:none;">
