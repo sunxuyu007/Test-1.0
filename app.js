@@ -522,11 +522,13 @@ function renderItem() {
     const item = currentList[currentIdx];
     updateProgress();
     
-    // Gestione universale tramite renderMedia per immagini locali (item.image) o link web (item.q)
-    const mediaSource = item.image ? item.image : item.q;
-    const mediaHtml = (item.image || (item.q && (item.q.startsWith('http://') || item.q.startsWith('https://')))) ? renderMedia(mediaSource) : '';
-    const hasMedia = mediaHtml !== '';
-    const showText = !hasMedia || item.image || (!item.image && !item.q.startsWith('http'));
+    // Controlliamo in modo pulito se c'è un'immagine locale o un link web
+    let mediaHtml = '';
+    if (item.image) {
+        mediaHtml = renderMedia(item.image);
+    } else if (item.q && (item.q.startsWith('http://') || item.q.startsWith('https://')) && (item.q.match(/\.(jpeg|jpg|png|webp|gif)/i) || item.q.includes('encrypted-tbn0.gstatic.com') || item.q.includes('images'))) {
+        mediaHtml = renderMedia(item.q);
+    }
 
     if (currentA === 'flashcard') {
         container.innerHTML =
@@ -535,7 +537,7 @@ function renderItem() {
             '<div class="flip-front">' +
             '<span class="badge">' + item.gRef + '</span>' +
             mediaHtml +
-            (showText && item.q ? '<div style="font-size:1.25rem; line-height:1.6; font-weight:500; margin-top:10px;">' + item.q + '</div>' : '') +
+            (item.image ? '' : '<div style="font-size:1.25rem; line-height:1.6; font-weight:500;">' + item.q + '</div>') +
             '<span class="flip-hint">🔄 Clicca per girare</span></div>' +
             '<div class="flip-back">' +
             '<span class="badge" style="background:linear-gradient(135deg, var(--success), var(--accent));">RISPOSTA</span>' +
@@ -549,7 +551,7 @@ function renderItem() {
             '<span class="badge">' + item.gRef + '</span>' +
             '<h3 style="font-size:1.2rem; margin:10px 0;">Esercizio</h3>' +
             mediaHtml +
-            (showText && item.q ? '<p style="font-size:1.05rem; margin-bottom:24px; line-height:1.7; color:var(--text-main);">' + item.q + '</p>' : '') +
+            (item.image ? '' : '<p style="font-size:1.05rem; margin-bottom:24px; line-height:1.7; color:var(--text-main);">' + item.q + '</p>') +
             '<button class="btn btn-success" onclick="revealSolution(this)">Mostra Svolgimento</button>' +
             '<div id="sol" class="solution-box">' + renderMedia(item.a) + '</div></div>';
 
@@ -585,8 +587,8 @@ function renderItem() {
         container.innerHTML =
             '<div class="exercise-card">' +
             '<span class="badge">' + item.gRef + '</span>' +
+            '<h3 style="font-size:1.15rem; margin-bottom:15px; line-height:1.5;">' + item.q + '</h3>' +
             mediaHtml +
-            (showText && item.q ? '<h3 style="font-size:1.15rem; margin:10px 0 20px; line-height:1.5;">' + item.q + '</h3>' : '') +
             optHtml +
             '<button class="btn" id="btn-submit-quiz" onclick="submitMultipleQuiz()" ' + btnState + ' style="margin-top:15px; width:100%;">Conferma Risposta 🎯</button>' +
             '</div>';
@@ -1003,14 +1005,8 @@ function submitMultipleQuiz() {
 
 function renderMedia(val) {
     if (!val) return '';
-    const isBase64 = val.startsWith('data:image');
-    const isUrl = (val.startsWith('http://') || val.startsWith('https://')) && 
-                  (val.match(/\.(jpeg|jpg|png|webp|gif)/i) || val.includes('encrypted-tbn0.gstatic.com') || val.includes('images'));
-    
-    if (isBase64 || isUrl) {
-        return '<div style="margin: 15px 0; text-align: center; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 12px; border: 1px solid var(--glass-border);">' +
-               '<img src="' + val + '" style="max-width: 100%; max-height: 350px; border-radius: 8px; object-fit: contain; display: block; margin: 0 auto;" alt="Immagine">' +
-               '</div>';
-    }
-    return val;
+    // Restituisce direttamente il tag img sia per i file locali (Base64) sia per i link web
+    return '<div style="margin: 15px 0; text-align: center; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 12px; border: 1px solid var(--glass-border);">' +
+           '<img src="' + val + '" style="max-width: 100%; max-height: 320px; border-radius: 8px; object-fit: contain; display: block; margin: 0 auto;" alt="Immagine">' +
+           '</div>';
 }
