@@ -155,7 +155,7 @@ function renderDash() {
         '<h3 style="font-size:1.1rem;">Aggiungi Corso</h3>' +
         '<p>Crea una nuova materia da studiare</p>';
     g.appendChild(addCard);
-}
+
 
     // --- CARD AGGIUNGI CORSO ---
     const addCard = document.createElement('div');
