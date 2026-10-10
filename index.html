@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniFlash v15 - Sistema Omnia</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="bg-aurora"></div>
+<div class="aurora-orb"></div>
+<div class="aurora-orb"></div>
+<div class="grid-pattern"></div>
+<div class="particles" id="particles"></div>
+<div class="toast-container" id="toast-container"></div>
+
+<!-- LOGIN -->
+<div id="login-overlay">
+    <div class="login-card">
+        <span class="login-logo">🎓</span>
+        <h1 style="font-size:2rem;">UniFlash <span class="gradient-text">v15</span></h1>
+        <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:32px;">Sistema Omnia &mdash; Accedi per continuare</p>
+        <input type="text" id="user" placeholder="Username" autocomplete="off">
+        <input type="password" id="pass" placeholder="Password" onkeydown="if(event.key==='Enter')handleLogin()">
+        <button class="btn" onclick="handleLogin()" style="width:100%; margin-top:12px; padding:15px;">Accedi</button>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- DASHBOARD -->
+    <div id="view-main" class="view">
+        <h1 style="margin-bottom:6px;">UniFlash <span class="gradient-text">Omnia</span></h1>
+        <p style="color:var(--text-muted); margin-bottom:10px; font-size:0.95rem;">Il tuo hub di studio intelligente</p>
+        <div class="grid" id="main-grid"></div>
+    </div>
+
+    <!-- SUBJECT MENU -->
+    <div id="view-subject-menu" class="view">
+        <button class="btn btn-back" onclick="showView('view-main')">&#8592; Dashboard</button>
+        <h2 id="subject-title" style="margin-top:24px;"></h2>
+
+        <div class="dropdown-container">
+            <div class="dropdown-trigger" id="dropdown-trigger" onclick="toggleFilterMenu()">
+                <span>📂 Argomenti Selezionati</span>
+                <span id="filter-status" style="opacity:0.7; font-size:0.88rem;">0/0</span>
+                <span class="arrow">&#9660;</span>
+            </div>
+            <div id="dropdown-list" class="dropdown-menu"></div>
+        </div>
+
+        <div class="grid">
+            <div class="card" onclick="openPreset('flashcard')">
+                <div class="card-icon icon-flashcard">🎴</div>
+                <h3>Flashcards</h3>
+                <p>Ripasso concetti chiave con carte interattive</p>
+            </div>
+            <div class="card" onclick="openPreset('quiz')">
+                <div class="card-icon icon-quiz">📝</div>
+                <h3>Quiz</h3>
+                <p>Testa le tue conoscenze con domande a risposta multipla</p>
+            </div>
+            <div class="card" onclick="openPreset('esercizio')">
+                <div class="card-icon icon-exercise">✍️</div>
+                <h3>Esercizi</h3>
+                <p>Problemi completi con svolgimenti dettagliati</p>
+            </div>
+            <div class="card" onclick="showView('view-browse')">
+                <div class="card-icon icon-browse">📂</div>
+                <h3>Esplora Gruppi</h3>
+                <p>Sfoglia, gestisci e cancella domande per argomento</p>
+            </div>
+            <div class="card" onclick="openManager()" style="grid-column: 1 / -1; padding:18px;">
+                <div class="card-icon icon-settings" style="width:40px; height:40px; font-size:1.2rem; margin-bottom:8px;">⚙️</div>
+                <span style="font-weight:600;">Gestione Avanzata & Editor</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- GROUP BROWSER -->
+    <div id="view-browse" class="view">
+        <button class="btn btn-back" onclick="showView('view-subject-menu')">&#8592; Indietro</button>
+        <h2 style="margin-top:20px;">📂 Esplora Gruppi</h2>
+        <p style="color:var(--text-muted); margin-bottom:20px; font-size:0.9rem;">Clicca un gruppo per espandere e gestire le domande</p>
+        <div id="browse-content" style="max-width:700px; margin:0 auto; text-align:left;"></div>
+    </div>
+
+    <!-- STUDY VIEW -->
+    <div id="view-study" class="view">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:10px;">
+            <button class="btn btn-back" onclick="endSession()">&#8592; Esci</button>
+            <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                <div class="timer-display" id="timer-display" style="display:none;">&#9201; <span id="timer-text">00:00</span></div>
+                <div class="score-display" id="score-display" style="display:none;">🎯 <span id="score-text">0/0</span></div>
+            </div>
+        </div>
+        <div class="progress-bar" style="margin-bottom:20px;">
+            <div class="progress-track">
+                <div class="progress-fill" id="progress-fill" style="width:0%;"></div>
+            </div>
+            <span class="progress-text" id="progress-text">0/0</span>
+        </div>
+        <div id="study-content"></div>
+        <div style="margin-top:30px;" id="study-nav">
+            <button class="btn" id="btn-next" onclick="nextItem()" style="min-width:200px; padding:15px 30px;">Prossima &#8594;</button>
+        </div>
+    </div>
+
+    <!-- RESULTS VIEW -->
+    <div id="view-results" class="view">
+        <div id="results-content"></div>
+    </div>
+
+    <!-- MANAGER -->
+    <div id="view-manager" class="view">
+        <button class="btn btn-back" onclick="showView('view-subject-menu')">&#8592; Indietro</button>
+        <div class="panel" style="margin-top:20px;">
+            <h4>🔗 Sync File Locale</h4>
+            <button class="btn" onclick="connectToFile()">Connetti database.json</button>
+            <div id="sync-info" style="font-size:0.82rem; margin-top:8px; color:var(--text-muted);">Stato: Browser Storage</div>
+        </div>
+        <div class="panel">
+            <h4>&#10133; Aggiungi Manualmente</h4>
+            <select id="add-type"><option value="flashcard">Flashcard</option><option value="quiz">Quiz</option><option value="esercizio">Esercizio Svolto</option></select>
+            <input type="text" id="add-group" placeholder="Sottogruppo (es. Cap 1. Matrici)">
+            <textarea id="add-q" placeholder="Testo domanda o esercizio..." rows="3"></textarea>
+            <textarea id="add-a" placeholder="Risposta o Svolgimento completo..." rows="3"></textarea>
+            <div id="quiz-fields" style="display:none;">
+                <input type="text" id="q-c" placeholder="Risposta CORRETTA">
+                <input type="text" id="q-w1" placeholder="Risposta ERRATA 1">
+                <input type="text" id="q-w2" placeholder="Risposta ERRATA 2">
+            </div>
+            <button class="btn" onclick="addManual()" style="margin-top:8px;">Salva nel Database</button>
+        </div>
+        <div class="panel">
+            <h4>🚀 Importazione / Formattazione</h4>
+            <textarea id="import-area" placeholder="Incolla JSON massivo qui..." rows="4"></textarea>
+            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">
+                <button class="btn" onclick="doImport()">Importa Dati</button>
+                <button class="btn btn-danger" onclick="clearSubject()">Svuota Materia</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL ROOT -->
+<div id="modal-root"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
