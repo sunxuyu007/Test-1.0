@@ -132,11 +132,24 @@
 </div>
             <textarea id="add-q" placeholder="Testo domanda o esercizio..." rows="3"></textarea>
             <textarea id="add-a" placeholder="Risposta o Svolgimento completo..." rows="3"></textarea>
-            <div id="quiz-fields" style="display:none;">
-                <input type="text" id="q-c" placeholder="Risposta CORRETTA">
-                <input type="text" id="q-w1" placeholder="Risposta ERRATA 1">
-                <input type="text" id="q-w2" placeholder="Risposta ERRATA 2">
-            </div>
+            <!-- Campi specifici per Quiz -->
+<div id="quiz-fields" style="display: none; margin-bottom: 15px;">
+    <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Opzioni di risposta (spunta la casella se è corretta):</label>
+    <div id="quiz-options-container" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;">
+        <!-- Le opzioni verranno generate dinamicamente o inserite di default -->
+        <div class="quiz-option-row" style="display: flex; gap: 8px; align-items: center;">
+            <input type="checkbox" class="opt-correct" title="Segna come risposta corretta" style="width: 20px; height: 20px; cursor: pointer;">
+            <input type="text" class="opt-text" placeholder="Risposta (es. Corretta)" style="flex: 1; margin-bottom: 0;">
+            <button type="button" class="delete-btn" onclick="this.parentElement.remove()" title="Rimuovi opzione">✕</button>
+        </div>
+        <div class="quiz-option-row" style="display: flex; gap: 8px; align-items: center;">
+            <input type="checkbox" class="opt-correct" title="Segna come risposta corretta" style="width: 20px; height: 20px; cursor: pointer;">
+            <input type="text" class="opt-text" placeholder="Risposta (es. Sbagliata 1)" style="flex: 1; margin-bottom: 0;">
+            <button type="button" class="delete-btn" onclick="this.parentElement.remove()" title="Rimuovi opzione">✕</button>
+        </div>
+    </div>
+    <button type="button" class="btn btn-sm btn-ghost" onclick="addQuizOptionRow()" style="font-size:0.85rem;">➕ Aggiungi opzione</button>
+</div>
             <button class="btn" onclick="addManual()" style="margin-top:8px;">Salva nel Database</button>
         </div>
         <div class="panel">
