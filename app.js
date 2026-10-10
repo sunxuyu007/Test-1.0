@@ -519,23 +519,14 @@ function renderItem() {
     const container = document.getElementById('study-content');
     if (!container) return;
     
-    // 1. Dichiariamo prima l'elemento corrente
     const item = currentList[currentIdx];
     updateProgress();
     
-// Prepariamo l'HTML dell'immagine con stili corretti e ben visibili
-    let imgHtml = '';
-    const isImageUrl = item.q && (item.q.startsWith('http://') || item.q.startsWith('https://')) && (item.q.match(/\.(jpeg|jpg|png|webp|gif)/i) || item.q.includes('encrypted-tbn0.gstatic.com') || item.q.includes('images'));
-
-    if (item.image) {
-        imgHtml = '<div style="margin: 15px 0; text-align: center; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 12px; border: 1px solid var(--glass-border);">' +
-                  '<img src="' + item.image + '" style="max-width: 100%; max-height: 350px; border-radius: 8px; object-fit: contain; display: block; margin: 0 auto;" alt="Allegato">' +
-                  '</div>';
-    } else if (isImageUrl) {
-        imgHtml = '<div style="margin: 15px 0; text-align: center; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 12px; border: 1px solid var(--glass-border);">' +
-                  '<img src="' + item.q + '" style="max-width: 100%; max-height: 350px; border-radius: 8px; object-fit: contain; display: block; margin: 0 auto;" alt="Immagine web">' +
-                  '</div>';
-    }
+    // Gestione universale tramite renderMedia per immagini locali (item.image) o link web (item.q)
+    const mediaSource = item.image ? item.image : item.q;
+    const mediaHtml = (item.image || (item.q && (item.q.startsWith('http://') || item.q.startsWith('https://')))) ? renderMedia(mediaSource) : '';
+    const hasMedia = mediaHtml !== '';
+    const showText = !hasMedia || item.image || (!item.image && !item.q.startsWith('http'));
 
     if (currentA === 'flashcard') {
         container.innerHTML =
@@ -543,26 +534,22 @@ function renderItem() {
             '<div class="flip-inner">' +
             '<div class="flip-front">' +
             '<span class="badge">' + item.gRef + '</span>' +
-            imgHtml +
-            '<div style="font-size:1.25rem; line-height:1.6; font-weight:500;">' + item.q + '</div>' +
+            mediaHtml +
+            (showText && item.q ? '<div style="font-size:1.25rem; line-height:1.6; font-weight:500; margin-top:10px;">' + item.q + '</div>' : '') +
             '<span class="flip-hint">🔄 Clicca per girare</span></div>' +
             '<div class="flip-back">' +
             '<span class="badge" style="background:linear-gradient(135deg, var(--success), var(--accent));">RISPOSTA</span>' +
-            '<div style="line-height:1.7; font-size:1.05rem;">' + item.a + '</div>' +
+            '<div style="line-height:1.7; font-size:1.05rem;">' + renderMedia(item.a) + '</div>' +
             '<span class="flip-hint">🔄 Clicca per tornare</span></div>' +
             '</div></div>';
 
     } else if (currentA === 'esercizio') {
-        const questionContent = renderMedia(item.q);
-        const qHtml = questionContent.includes('<img') ? 
-            questionContent : 
-            '<p style="font-size:1.05rem; margin-bottom:24px; line-height:1.7; color:var(--text-main);">' + item.q + '</p>';
-        
         container.innerHTML =
             '<div class="exercise-card">' +
             '<span class="badge">' + item.gRef + '</span>' +
             '<h3 style="font-size:1.2rem; margin:10px 0;">Esercizio</h3>' +
-            qHtml +
+            mediaHtml +
+            (showText && item.q ? '<p style="font-size:1.05rem; margin-bottom:24px; line-height:1.7; color:var(--text-main);">' + item.q + '</p>' : '') +
             '<button class="btn btn-success" onclick="revealSolution(this)">Mostra Svolgimento</button>' +
             '<div id="sol" class="solution-box">' + renderMedia(item.a) + '</div></div>';
 
@@ -598,14 +585,13 @@ function renderItem() {
         container.innerHTML =
             '<div class="exercise-card">' +
             '<span class="badge">' + item.gRef + '</span>' +
-            '<h3 style="font-size:1.15rem; margin:10px 0 20px; line-height:1.5;">' + item.q + '</h3>' +
-            imgHtml +
+            mediaHtml +
+            (showText && item.q ? '<h3 style="font-size:1.15rem; margin:10px 0 20px; line-height:1.5;">' + item.q + '</h3>' : '') +
             optHtml +
             '<button class="btn" id="btn-submit-quiz" onclick="submitMultipleQuiz()" ' + btnState + ' style="margin-top:15px; width:100%;">Conferma Risposta 🎯</button>' +
             '</div>';
     }
 }
-
 function revealSolution(btn) {
     const sol = document.getElementById('sol');
     if (sol) sol.style.display = 'block';
