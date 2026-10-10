@@ -110,6 +110,21 @@ function renderDash() {
 
         g.appendChild(card);
     });
+
+    // --- CARD AGGIUNGI CORSO ---
+    const addCard = document.createElement('div');
+    addCard.className = 'card';
+    addCard.style.border = '2px dashed var(--glass-border-hover)';
+    addCard.style.display = 'flex';
+    addCard.style.flexDirection = 'column';
+    addCard.style.alignItems = 'center';
+    addCard.style.justifyContent = 'center';
+    addCard.onclick = function() { addNewCourse(); };
+    addCard.innerHTML =
+        '<div class="card-icon icon-settings" style="width:40px; height:40px; font-size:1.2rem; margin-bottom:8px;">➕</div>' +
+        '<h3 style="font-size:1.1rem;">Aggiungi Corso</h3>' +
+        '<p>Crea una nuova materia da studiare</p>';
+    g.appendChild(addCard);
 }
 
 function openSub(m) {
@@ -672,3 +687,22 @@ document.addEventListener('keydown', function(e) {
     }
     if (e.code === 'Escape') closeModal();
 });
+
+// ===== AGGIUNGI NUOVO CORSO =====
+function addNewCourse() {
+    const courseName = prompt("Inserisci il nome del nuovo corso (es. Fisica Tecnica):");
+    if (!courseName) return;
+    const trimmed = courseName.trim();
+    if (!trimmed) return;
+    
+    if (db[trimmed]) {
+        showToast('Questo corso esiste già!', 'error');
+        return;
+    }
+    
+    // Inizializza il nuovo corso con un gruppo vuoto
+    db[trimmed] = { groups: {} };
+    save();
+    renderDash();
+    showToast('Corso aggiunto con successo!', 'success');
+}
