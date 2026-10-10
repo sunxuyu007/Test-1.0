@@ -1,6 +1,7 @@
 // ===== PARTICLES =====
 (function() {
     const container = document.getElementById('particles');
+    if (!container) return;
     for (let i = 0; i < 35; i++) {
         const p = document.createElement('div');
         p.className = 'particle';
@@ -43,6 +44,7 @@ document.addEventListener('click', (e) => {
 function showToast(message, type) {
     type = type || 'info';
     const container = document.getElementById('toast-container');
+    if (!container) return;
     const icons = { success: '&#10003;', error: '&#10007;', info: '&#8505;' };
     const toast = document.createElement('div');
     toast.className = 'toast ' + type;
@@ -99,7 +101,6 @@ function renderDash() {
     if (!g) return;
     g.innerHTML = "";
     
-    // Controlla che db esista e abbia dei corsi
     if (!db) db = {};
 
     Object.keys(db).forEach(function(m) {
@@ -126,88 +127,53 @@ function renderDash() {
     });
 
     // --- CARD AGGIUNGI CORSO ---
-    const addCard = document.createElement('div');
-    addCard.className = 'card';
-    addCard.style.border = '2px dashed var(--glass-border-hover)';
-    addCard.style.display = 'flex';
-    addCard.style.flexDirection = 'column';
-    addCard.style.alignItems = 'center';
-    addCard.style.justifyContent = 'center';
-    addCard.onclick = function() { addNewCourse(); };
-    addCard.innerHTML =
+    const newAddCard = document.createElement('div');
+    newAddCard.className = 'card';
+    newAddCard.style.border = '2px dashed var(--glass-border-hover)';
+    newAddCard.style.display = 'flex';
+    newAddCard.style.flexDirection = 'column';
+    newAddCard.style.alignItems = 'center';
+    newAddCard.style.justifyContent = 'center';
+    newAddCard.onclick = function() { addNewCourse(); };
+    newAddCard.innerHTML =
         '<div class="card-icon icon-settings" style="width:40px; height:40px; font-size:1.2rem; margin-bottom:8px;">➕</div>' +
         '<h3 style="font-size:1.1rem;">Aggiungi Corso</h3>' +
         '<p>Crea una nuova materia da studiare</p>';
-    g.appendChild(addCard);
+    g.appendChild(newAddCard);
 }
 
-    // --- CARD AGGIUNGI CORSO ---
-    const addCard = document.createElement('div');
-    addCard.className = 'card';
-    addCard.style.border = '2px dashed var(--glass-border-hover)';
-    addCard.style.display = 'flex';
-    addCard.style.flexDirection = 'column';
-    addCard.style.alignItems = 'center';
-    addCard.style.justifyContent = 'center';
-    addCard.onclick = function() { addNewCourse(); };
-    addCard.innerHTML =
-        '<div class="card-icon icon-settings" style="width:40px; height:40px; font-size:1.2rem; margin-bottom:8px;">➕</div>' +
-        '<h3 style="font-size:1.1rem;">Aggiungi Corso</h3>' +
-        '<p>Crea una nuova materia da studiare</p>';
-    g.appendChild(addCard);
-
-
-    // --- CARD AGGIUNGI CORSO ---
-    const addCard = document.createElement('div');
-    addCard.className = 'card';
-    addCard.style.border = '2px dashed var(--glass-border-hover)';
-    addCard.style.display = 'flex';
-    addCard.style.flexDirection = 'column';
-    addCard.style.alignItems = 'center';
-    addCard.style.justifyContent = 'center';
-    addCard.onclick = function() { addNewCourse(); };
-    addCard.innerHTML =
-        '<div class="card-icon icon-settings" style="width:40px; height:40px; font-size:1.2rem; margin-bottom:8px;">➕</div>' +
-        '<h3 style="font-size:1.1rem;">Aggiungi Corso</h3>' +
-        '<p>Crea una nuova materia da studiare</p>';
-    g.appendChild(addCard);
+// ===== AGGIUNGI NUOVO CORSO =====
+function addNewCourse() {
+    const courseName = prompt("Inserisci il nome del nuovo corso (es. Fisica Tecnica):");
+    if (!courseName) return;
+    const trimmed = courseName.trim();
+    if (!trimmed) return;
+    
+    if (db[trimmed]) {
+        showToast('Questo corso esiste già!', 'error');
+        return;
+    }
+    
+    db[trimmed] = { groups: {} };
+    save();
+    renderDash();
+    showToast('Corso aggiunto con successo!', 'success');
 }
 
-    // --- CARD AGGIUNGI CORSO ---
-    const addCard = document.createElement('div');
-    addCard.className = 'card';
-    addCard.style.border = '2px dashed var(--glass-border-hover)';
-    addCard.style.display = 'flex';
-    addCard.style.flexDirection = 'column';
-    addCard.style.alignItems = 'center';
-    addCard.style.justifyContent = 'center';
-    addCard.onclick = function() { addNewCourse(); };
-    addCard.innerHTML =
-        '<div class="card-icon icon-settings" style="width:40px; height:40px; font-size:1.2rem; margin-bottom:8px;">➕</div>' +
-        '<h3 style="font-size:1.1rem;">Aggiungi Corso</h3>' +
-        '<p>Crea una nuova materia da studiare</p>';
-    g.appendChild(addCard);
-    });
-
-    // --- CARD AGGIUNGI CORSO ---
-    const addCard = document.createElement('div');
-    addCard.className = 'card';
-    addCard.style.border = '2px dashed var(--glass-border-hover)';
-    addCard.style.display = 'flex';
-    addCard.style.flexDirection = 'column';
-    addCard.style.alignItems = 'center';
-    addCard.style.justifyContent = 'center';
-    addCard.onclick = function() { addNewCourse(); };
-    addCard.innerHTML =
-        '<div class="card-icon icon-settings" style="width:40px; height:40px; font-size:1.2rem; margin-bottom:8px;">➕</div>' +
-        '<h3 style="font-size:1.1rem;">Aggiungi Corso</h3>' +
-        '<p>Crea una nuova materia da studiare</p>';
-    g.appendChild(addCard);
+// ===== ELIMINA CORSO =====
+function deleteCourse(courseName) {
+    if (confirm('Sei sicuro di voler eliminare definitivamente il corso "' + courseName + '" e tutti i suoi dati?')) {
+        delete db[courseName];
+        save();
+        renderDash();
+        showToast('Corso eliminato con successo', 'info');
+    }
 }
 
 function openSub(m) {
     currentS = m;
-    document.getElementById('subject-title').innerText = m;
+    const titleEl = document.getElementById('subject-title');
+    if (titleEl) titleEl.innerText = m;
     renderDropdown();
     showView('view-subject-menu');
 }
@@ -215,8 +181,9 @@ function openSub(m) {
 // ===== DROPDOWN =====
 function renderDropdown() {
     const list = document.getElementById('dropdown-list');
+    if (!list) return;
     list.innerHTML = "";
-    const groups = db[currentS].groups;
+    const groups = db[currentS] && db[currentS].groups ? db[currentS].groups : {};
     for (let gName in groups) {
         const row = document.createElement('div');
         row.className = 'filter-row';
@@ -236,28 +203,34 @@ function renderDropdown() {
 }
 
 function toggleFilterMenu() {
-    document.getElementById('dropdown-list').classList.toggle('active');
-    document.getElementById('dropdown-trigger').classList.toggle('open');
+    const list = document.getElementById('dropdown-list');
+    const trigger = document.getElementById('dropdown-trigger');
+    if (list) list.classList.toggle('active');
+    if (trigger) trigger.classList.toggle('open');
 }
 
 document.addEventListener('click', function(e) {
     const c = document.querySelector('.dropdown-container');
+    const list = document.getElementById('dropdown-list');
+    const trigger = document.getElementById('dropdown-trigger');
     if (c && !c.contains(e.target)) {
-        document.getElementById('dropdown-list').classList.remove('active');
-        document.getElementById('dropdown-trigger').classList.remove('open');
+        if (list) list.classList.remove('active');
+        if (trigger) trigger.classList.remove('open');
     }
 });
 
 function updateFilterStatus() {
     const count = document.querySelectorAll('.g-check:checked').length;
     const total = document.querySelectorAll('.g-check').length;
-    document.getElementById('filter-status').innerText = count + '/' + total + ' selezionati';
+    const statusEl = document.getElementById('filter-status');
+    if (statusEl) statusEl.innerText = count + '/' + total + ' selezionati';
 }
 
 // ===== GROUP BROWSER =====
 function renderBrowse() {
     const container = document.getElementById('browse-content');
-    const groups = db[currentS].groups;
+    if (!container) return;
+    const groups = db[currentS] && db[currentS].groups ? db[currentS].groups : {};
     if (Object.keys(groups).length === 0) {
         container.innerHTML = '<p style="text-align:center; color:var(--text-muted); padding:40px;">Nessun gruppo in questa materia.</p>';
         return;
@@ -290,34 +263,38 @@ function renderBrowse() {
 function toggleGroup(header) {
     const chevron = header.querySelector('.chevron');
     const body = header.nextElementSibling;
-    chevron.classList.toggle('open');
-    body.classList.toggle('open');
+    if (chevron) chevron.classList.toggle('open');
+    if (body) body.classList.toggle('open');
 }
 
 function deleteQuestion(gName, idx) {
     if (!confirm('Eliminare questa domanda?')) return;
-    db[currentS].groups[gName].splice(idx, 1);
-    if (db[currentS].groups[gName].length === 0) delete db[currentS].groups[gName];
-    save();
-    renderBrowse();
-    renderDropdown();
-    showToast('Domanda eliminata', 'info');
+    if (db[currentS] && db[currentS].groups && db[currentS].groups[gName]) {
+        db[currentS].groups[gName].splice(idx, 1);
+        if (db[currentS].groups[gName].length === 0) delete db[currentS].groups[gName];
+        save();
+        renderBrowse();
+        renderDropdown();
+        showToast('Domanda eliminata', 'info');
+    }
 }
 
 function deleteGroup(gName) {
     if (!confirm('Eliminare tutto il gruppo "' + gName + '"?')) return;
-    delete db[currentS].groups[gName];
-    save();
-    renderBrowse();
-    renderDropdown();
-    showToast('Gruppo eliminato', 'info');
+    if (db[currentS] && db[currentS].groups) {
+        delete db[currentS].groups[gName];
+        save();
+        renderBrowse();
+        renderDropdown();
+        showToast('Gruppo eliminato', 'info');
+    }
 }
 
 // ===== PRESET MODAL =====
 function openPreset(type) {
     currentA = type;
     const typeLabels = { flashcard: '🎴 Flashcards', quiz: '📝 Quiz', esercizio: '✍️ Esercizi' };
-    const groups = db[currentS].groups;
+    const groups = db[currentS] && db[currentS].groups ? db[currentS].groups : {};
     const selected = Array.from(document.querySelectorAll('.g-check:checked')).map(function(c) { return c.value; });
 
     let totalAvail = 0;
@@ -387,45 +364,55 @@ function openPreset(type) {
         '<button class="btn btn-back" onclick="closeModal()">Annulla</button></div>' +
         '</div></div>';
 
-    document.getElementById('modal-root').innerHTML = html;
+    const modalRoot = document.getElementById('modal-root');
+    if (modalRoot) modalRoot.innerHTML = html;
 }
 
 function updatePresetCount() {
     const checked = Array.from(document.querySelectorAll('.preset-check:checked')).map(function(c) { return c.value; });
     let avail = 0;
+    const groups = db[currentS] && db[currentS].groups ? db[currentS].groups : {};
     checked.forEach(function(g) {
-        if (db[currentS].groups[g]) {
-            avail += db[currentS].groups[g].filter(function(i) { return i.type === currentA; }).length;
+        if (groups[g]) {
+            avail += groups[g].filter(function(i) { return i.type === currentA; }).length;
         }
     });
     const countInput = document.getElementById('preset-count');
-    countInput.max = avail;
-    if (parseInt(countInput.value) > avail) countInput.value = avail;
-    document.getElementById('preset-avail-info').innerText = 'Disponibili: ' + avail;
+    const availInfo = document.getElementById('preset-avail-info');
+    if (countInput) {
+        countInput.max = avail;
+        if (parseInt(countInput.value) > avail) countInput.value = avail;
+    }
+    if (availInfo) availInfo.innerText = 'Disponibili: ' + avail;
 }
 
 function closeModal() {
-    const overlay = document.getElementById('modal-root').querySelector('.modal-overlay');
+    const modalRoot = document.getElementById('modal-root');
+    const overlay = modalRoot ? modalRoot.querySelector('.modal-overlay') : null;
     if (overlay) {
         overlay.style.opacity = '0';
         overlay.style.transition = 'opacity 0.2s ease';
-        setTimeout(function() { document.getElementById('modal-root').innerHTML = ''; }, 200);
-    } else {
-        document.getElementById('modal-root').innerHTML = '';
+        setTimeout(function() { if (modalRoot) modalRoot.innerHTML = ''; }, 200);
+    } else if (modalRoot) {
+        modalRoot.innerHTML = '';
     }
 }
 
 // ===== LAUNCH SESSION =====
 function launchSession() {
     const selected = Array.from(document.querySelectorAll('.preset-check:checked')).map(function(c) { return c.value; });
-    let count = parseInt(document.getElementById('preset-count').value) || 999;
-    randomizeOrder = document.getElementById('toggle-random').classList.contains('active');
-    timerLimit = parseInt(document.getElementById('preset-timer').value) || 0;
+    const countInput = document.getElementById('preset-count');
+    let count = countInput ? (parseInt(countInput.value) || 999) : 999;
+    const toggleRandomEl = document.getElementById('toggle-random');
+    randomizeOrder = toggleRandomEl ? toggleRandomEl.classList.contains('active') : true;
+    const timerSelect = document.getElementById('preset-timer');
+    timerLimit = timerSelect ? (parseInt(timerSelect.value) || 0) : 0;
 
     currentList = [];
+    const groups = db[currentS] && db[currentS].groups ? db[currentS].groups : {};
     selected.forEach(function(g) {
-        if (db[currentS].groups[g]) {
-            db[currentS].groups[g].forEach(function(item) {
+        if (groups[g]) {
+            groups[g].forEach(function(item) {
                 if (item.type === currentA) {
                     currentList.push({ type: item.type, q: item.q, a: item.a, options: item.options, gRef: g });
                 }
@@ -456,15 +443,16 @@ function launchSession() {
 
     if (timerLimit > 0) {
         timerSeconds = timerLimit;
-        timerEl.style.display = 'inline-flex';
-        timerEl.className = 'timer-display';
-        timerText.innerText = formatTime(timerSeconds);
+        if (timerEl) { timerEl.style.display = 'inline-flex'; timerEl.className = 'timer-display'; }
+        if (timerText) timerText.innerText = formatTime(timerSeconds);
         timerInterval = setInterval(function() {
             timerSeconds--;
-            timerText.innerText = formatTime(timerSeconds);
-            if (timerSeconds <= 10) timerEl.className = 'timer-display danger';
-            else if (timerSeconds <= 30) timerEl.className = 'timer-display warning';
-            else timerEl.className = 'timer-display';
+            if (timerText) timerText.innerText = formatTime(timerSeconds);
+            if (timerEl) {
+                if (timerSeconds <= 10) timerEl.className = 'timer-display danger';
+                else if (timerSeconds <= 30) timerEl.className = 'timer-display warning';
+                else timerEl.className = 'timer-display';
+            }
             if (timerSeconds <= 0) {
                 clearInterval(timerInterval);
                 showToast('Tempo scaduto!', 'error');
@@ -473,24 +461,25 @@ function launchSession() {
         }, 1000);
     } else {
         timerSeconds = 0;
-        timerEl.style.display = 'inline-flex';
-        timerEl.className = 'timer-display';
-        timerText.innerText = '00:00';
+        if (timerEl) { timerEl.style.display = 'inline-flex'; timerEl.className = 'timer-display'; }
+        if (timerText) timerText.innerText = '00:00';
         timerInterval = setInterval(function() {
             timerSeconds++;
-            timerText.innerText = formatTime(timerSeconds);
+            if (timerText) timerText.innerText = formatTime(timerSeconds);
         }, 1000);
     }
 
     const scoreEl = document.getElementById('score-display');
+    const scoreText = document.getElementById('score-text');
     if (currentA === 'quiz') {
-        scoreEl.style.display = 'inline-flex';
-        document.getElementById('score-text').innerText = '0/' + sessionTotal;
+        if (scoreEl) scoreEl.style.display = 'inline-flex';
+        if (scoreText) scoreText.innerText = '0/' + sessionTotal;
     } else {
-        scoreEl.style.display = 'none';
+        if (scoreEl) scoreEl.style.display = 'none';
     }
 
-    document.getElementById('btn-next').style.display = '';
+    const btnNext = document.getElementById('btn-next');
+    if (btnNext) btnNext.style.display = '';
 
     updateProgress();
     renderItem();
@@ -515,13 +504,16 @@ function endSession() {
 // ===== PROGRESS =====
 function updateProgress() {
     const pct = currentList.length > 0 ? ((currentIdx + 1) / currentList.length * 100) : 0;
-    document.getElementById('progress-fill').style.width = pct + '%';
-    document.getElementById('progress-text').innerText = (currentIdx + 1) + '/' + currentList.length;
+    const progressFill = document.getElementById('progress-fill');
+    const progressText = document.getElementById('progress-text');
+    if (progressFill) progressFill.style.width = pct + '%';
+    if (progressText) progressText.innerText = (currentIdx + 1) + '/' + currentList.length;
 }
 
 // ===== RENDER ITEM =====
 function renderItem() {
     const container = document.getElementById('study-content');
+    if (!container) return;
     const item = currentList[currentIdx];
     updateProgress();
 
@@ -579,15 +571,17 @@ function renderItem() {
 }
 
 function revealSolution(btn) {
-    document.getElementById('sol').style.display = 'block';
-    btn.style.display = 'none';
+    const sol = document.getElementById('sol');
+    if (sol) sol.style.display = 'block';
+    if (btn) btn.style.display = 'none';
 }
 
 function answerQuiz(origIdx, isCorrect, clickedBtn) {
     if (sessionAnswered[currentIdx] !== null) return;
     sessionAnswered[currentIdx] = origIdx;
     if (isCorrect) sessionScore++;
-    document.getElementById('score-text').innerText = sessionScore + '/' + sessionTotal;
+    const scoreText = document.getElementById('score-text');
+    if (scoreText) scoreText.innerText = sessionScore + '/' + sessionTotal;
 
     const allBtns = clickedBtn.parentElement.querySelectorAll('.quiz-option');
     allBtns.forEach(function(b) {
@@ -667,7 +661,8 @@ function showResults() {
         '<button class="btn btn-back" onclick="showView(\'view-subject-menu\')">&#8592; Menu</button>' +
         '</div></div>';
 
-    document.getElementById('results-content').innerHTML = html;
+    const resultsContent = document.getElementById('results-content');
+    if (resultsContent) resultsContent.innerHTML = html;
     showView('view-results');
 }
 
@@ -678,7 +673,8 @@ async function connectToFile() {
         const file = await fileHandle.getFile();
         db = JSON.parse(await file.text());
         save(); renderDash();
-        document.getElementById('sync-info').innerHTML = 'Stato: <span style="color:var(--success);">FILE CONNESSO</span>';
+        const syncInfo = document.getElementById('sync-info');
+        if (syncInfo) syncInfo.innerHTML = 'Stato: <span style="color:var(--success);">FILE CONNESSO</span>';
         showToast('Database connesso!', 'success');
     } catch (e) { if (e.name !== 'AbortError') showToast('Errore nella connessione', 'error'); }
 }
@@ -688,28 +684,36 @@ function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); }
 function showView(id) {
     document.querySelectorAll('.view').forEach(function(v) { v.style.display = 'none'; });
     const target = document.getElementById(id);
-    target.style.display = 'block';
-    target.style.animation = 'none';
-    target.offsetHeight;
-    target.style.animation = '';
-    if (id === 'view-browse') renderBrowse();
+    if (target) {
+        target.style.display = 'block';
+        target.style.animation = 'none';
+        target.offsetHeight;
+        target.style.animation = '';
+        if (id === 'view-browse') renderBrowse();
+    }
 }
 
 function openManager() { showView('view-manager'); }
 
 function clearSubject() {
     if (confirm("Svuotare tutto il contenuto di questa materia?")) {
-        db[currentS].groups = {};
-        save(); openSub(currentS);
-        showToast('Materia svuotata', 'info');
+        if (db[currentS]) {
+            db[currentS].groups = {};
+            save();
+            openSub(currentS);
+            showToast('Materia svuotata', 'info');
+        }
     }
 }
 
 function addManual() {
     const type = document.getElementById('add-type').value;
-    const gName = document.getElementById('add-group').value.trim() || "Generale";
-    const q = document.getElementById('add-q').value.trim();
+    const gNameInput = document.getElementById('add-group').value;
+    const gName = gNameInput ? gNameInput.trim() || "Generale" : "Generale";
+    const qInput = document.getElementById('add-q').value;
+    const q = qInput ? qInput.trim() : "";
     if (!q) { showToast('Inserisci il testo della domanda', 'error'); return; }
+    
     let item = { type: type, q: q, enabled: true };
     if (type === 'quiz') {
         const correct = document.getElementById('q-c').value.trim();
@@ -717,11 +721,17 @@ function addManual() {
         const w2 = document.getElementById('q-w2').value.trim();
         if (!correct || !w1 || !w2) { showToast('Compila tutte le risposte', 'error'); return; }
         item.options = [{ text: correct, isCorrect: true }, { text: w1, isCorrect: false }, { text: w2, isCorrect: false }];
-    } else { item.a = document.getElementById('add-a').value; }
+    } else { 
+        const aInput = document.getElementById('add-a').value;
+        item.a = aInput; 
+    }
+    
+    if (!db[currentS]) db[currentS] = { groups: {} };
     if (!db[currentS].groups[gName]) db[currentS].groups[gName] = [];
     db[currentS].groups[gName].push(item);
     save();
     showToast('Elemento aggiunto!', 'success');
+    
     document.getElementById('add-q').value = '';
     document.getElementById('add-a').value = '';
     document.getElementById('q-c').value = '';
@@ -731,30 +741,39 @@ function addManual() {
 
 function doImport() {
     try {
-        const raw = document.getElementById('import-area').value.trim();
+        const importArea = document.getElementById('import-area');
+        const raw = importArea ? importArea.value.trim() : "";
         if (!raw) { showToast('Incolla dei dati JSON prima di importare', 'error'); return; }
         const data = JSON.parse(raw);
         let count = 0;
         data.forEach(function(i) {
-            if (!db[currentS].groups[i.group]) db[currentS].groups[i.group] = [];
-            db[currentS].groups[i.group].push(i);
+            const groupName = i.group || "Generale";
+            if (!db[currentS]) db[currentS] = { groups: {} };
+            if (!db[currentS].groups[groupName]) db[currentS].groups[groupName] = [];
+            db[currentS].groups[groupName].push(i);
             count++;
         });
         save();
         showToast(count + ' elementi importati!', 'success');
-        document.getElementById('import-area').value = '';
+        if (importArea) importArea.value = '';
         openSub(currentS);
     } catch (e) { showToast('Errore nel formato JSON', 'error'); }
 }
 
-document.getElementById('add-type').onchange = function(e) {
-    document.getElementById('quiz-fields').style.display = e.target.value === 'quiz' ? 'block' : 'none';
-    document.getElementById('add-a').style.display = e.target.value === 'quiz' ? 'none' : 'block';
-};
+const addTypeSelect = document.getElementById('add-type');
+if (addTypeSelect) {
+    addTypeSelect.onchange = function(e) {
+        const quizFields = document.getElementById('quiz-fields');
+        const addA = document.getElementById('add-a');
+        if (quizFields) quizFields.style.display = e.target.value === 'quiz' ? 'block' : 'none';
+        if (addA) addA.style.display = e.target.value === 'quiz' ? 'none' : 'block';
+    };
+}
 
 // Keyboard shortcuts
 document.addEventListener('keydown', function(e) {
-    if (document.getElementById('view-study').style.display === 'block') {
+    const studyView = document.getElementById('view-study');
+    if (studyView && studyView.style.display === 'block') {
         if (e.code === 'Space' && !e.target.matches('input, textarea, select')) {
             e.preventDefault();
             const flipInner = document.querySelector('.flip-inner');
@@ -765,32 +784,3 @@ document.addEventListener('keydown', function(e) {
     }
     if (e.code === 'Escape') closeModal();
 });
-
-// ===== AGGIUNGI NUOVO CORSO =====
-function addNewCourse() {
-    const courseName = prompt("Inserisci il nome del nuovo corso (es. Fisica Tecnica):");
-    if (!courseName) return;
-    const trimmed = courseName.trim();
-    if (!trimmed) return;
-    
-    if (db[trimmed]) {
-        showToast('Questo corso esiste già!', 'error');
-        return;
-    }
-    
-    // Inizializza il nuovo corso con un gruppo vuoto
-    db[trimmed] = { groups: {} };
-    save();
-    renderDash();
-    showToast('Corso aggiunto con successo!', 'success');
-}
-
-// ===== ELIMINA CORSO =====
-function deleteCourse(courseName) {
-    if (confirm('Sei sicuro di voler eliminare definitivamente il corso "' + courseName + '" e tutti i suoi dati?')) {
-        delete db[courseName];
-        save();
-        renderDash();
-        showToast('Corso eliminato con successo', 'info');
-    }
-}
