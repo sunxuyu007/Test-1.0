@@ -749,7 +749,6 @@ function addManual() {
     const qInput = document.getElementById('add-q').value;
     const q = qInput ? qInput.trim() : "";
     
-    // Controlla se c'è almeno del testo o un'immagine allegata
     const imageInput = document.getElementById('add-image');
     const hasImage = imageInput && imageInput.files && imageInput.files[0];
     
@@ -760,19 +759,21 @@ function addManual() {
     
     let item = { type: type, q: q, enabled: true };
 
-    // Se è stata caricata un'immagine, la leggiamo e la convertiamo
+    // Se è stata caricata un'immagine dal PC, la leggiamo prima di procedere
     if (hasImage) {
         const reader = new FileReader();
         reader.onload = function(e) {
-            item.image = e.target.result; // Salva l'immagine convertita in stringa
+            item.image = e.target.result; // Salva la stringa Base64 dell'immagine
             finishAddManual(item, gName);
+        };
+        reader.onerror = function() {
+            showToast('Errore durante la lettura dell\'immagine', 'error');
         };
         reader.readAsDataURL(imageInput.files[0]);
     } else {
         finishAddManual(item, gName);
     }
 }
-
 // Funzione di supporto per completare il salvataggio
 function finishAddManual(item, gName) {
     const type = item.type;
@@ -1016,7 +1017,6 @@ function submitMultipleQuiz() {
 
 function renderMedia(val) {
     if (!val) return '';
-    // Se è un'immagine in base64 o un link web valido
     const isBase64 = val.startsWith('data:image');
     const isUrl = (val.startsWith('http://') || val.startsWith('https://')) && 
                   (val.match(/\.(jpeg|jpg|png|webp|gif)/i) || val.includes('encrypted-tbn0.gstatic.com') || val.includes('images'));
