@@ -516,15 +516,18 @@ function updateProgress() {
 
 // ===== RENDER ITEM =====
 function renderItem() {
-    // Genera il codice per mostrare l'immagine se è presente
+    const container = document.getElementById('study-content');
+    if (!container) return;
+    
+    // 1. Dichiariamo prima l'elemento corrente
+    const item = currentList[currentIdx];
+    updateProgress();
+
+    // 2. Prepariamo l'HTML dell'immagine se presente
     let imgHtml = '';
     if (item.image) {
         imgHtml = '<div style="margin: 14px 0; text-align: center;"><img src="' + item.image + '" style="max-width: 100%; max-height: 260px; border-radius: 8px; border: 1px solid var(--glass-border); object-fit: contain;" alt="Allegato appunti"></div>';
     }
-    const container = document.getElementById('study-content');
-    if (!container) return;
-    const item = currentList[currentIdx];
-    updateProgress();
 
     if (currentA === 'flashcard') {
         container.innerHTML =
@@ -532,6 +535,7 @@ function renderItem() {
             '<div class="flip-inner">' +
             '<div class="flip-front">' +
             '<span class="badge">' + item.gRef + '</span>' +
+            imgHtml +
             '<div style="font-size:1.25rem; line-height:1.6; font-weight:500;">' + item.q + '</div>' +
             '<span class="flip-hint">🔄 Clicca per girare</span></div>' +
             '<div class="flip-back">' +
@@ -545,7 +549,8 @@ function renderItem() {
             '<div class="exercise-card">' +
             '<span class="badge">' + item.gRef + '</span>' +
             '<h3 style="font-size:1.2rem; margin:10px 0;">Esercizio</h3>' +
-            '<p style="font-size:1.05rem; margin-bottom:24px; line-height:1.7; color:var(--text-muted);">' + item.q + '</p>' +
+            imgHtml +
+            '<p style="font-size:1.05rem; margin-bottom:24px; line-height:1.7; color:var(--text-main);">' + item.q + '</p>' +
             '<button class="btn btn-success" onclick="revealSolution(this)">Mostra Svolgimento</button>' +
             '<div id="sol" class="solution-box">' + item.a + '</div></div>';
 
@@ -562,18 +567,15 @@ function renderItem() {
         let optHtml = '';
         for (let i = 0; i < opts.length; i++) {
             let cls = 'quiz-option';
-            let extra = '';
             let checkedAttr = '';
             
             if (answered !== null) {
-                extra = ' disabled';
                 if (opts[i].isCorrect) cls += ' correct';
                 else if (Array.isArray(answered) && answered.includes(opts[i].origIdx)) cls += ' wrong';
             } else if (Array.isArray(answered) && answered.includes(opts[i].origIdx)) {
                 checkedAttr = 'checked';
             }
 
-            // Usiamo un design pulito con checkbox interattive per quiz a risposta multipla
             optHtml += '<div class="quiz-option-checkbox-row ' + cls + '" style="display:flex; align-items:center; gap:12px; padding:12px 16px; background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:12px; margin-bottom:8px; cursor:pointer;" onclick="toggleQuizCheckbox(this)">' +
                 '<input type="checkbox" class="quiz-cb" value="' + opts[i].origIdx + '" data-correct="' + opts[i].isCorrect + '" ' + checkedAttr + (answered !== null ? ' disabled' : '') + ' style="width:20px; height:20px; cursor:pointer;">' +
                 '<span style="flex:1; font-size:1rem;">' + opts[i].text + '</span>' +
@@ -585,6 +587,7 @@ function renderItem() {
             '<div class="exercise-card">' +
             '<span class="badge">' + item.gRef + '</span>' +
             '<h3 style="font-size:1.15rem; margin:10px 0 20px; line-height:1.5;">' + item.q + '</h3>' +
+            imgHtml +
             optHtml +
             '<button class="btn" id="btn-submit-quiz" onclick="submitMultipleQuiz()" ' + btnState + ' style="margin-top:15px; width:100%;">Conferma Risposta 🎯</button>' +
             '</div>';
