@@ -553,14 +553,18 @@ function renderItem() {
             '</div></div>';
 
     } else if (currentA === 'esercizio') {
+        const questionContent = renderMedia(item.q);
+        const qHtml = questionContent.includes('<img') ? 
+            questionContent : 
+            '<p style="font-size:1.05rem; margin-bottom:24px; line-height:1.7; color:var(--text-main);">' + item.q + '</p>';
+        
         container.innerHTML =
             '<div class="exercise-card">' +
             '<span class="badge">' + item.gRef + '</span>' +
             '<h3 style="font-size:1.2rem; margin:10px 0;">Esercizio</h3>' +
-            imgHtml +
-            '<p style="font-size:1.05rem; margin-bottom:24px; line-height:1.7; color:var(--text-main);">' + item.q + '</p>' +
+            qHtml +
             '<button class="btn btn-success" onclick="revealSolution(this)">Mostra Svolgimento</button>' +
-            '<div id="sol" class="solution-box">' + item.a + '</div></div>';
+            '<div id="sol" class="solution-box">' + renderMedia(item.a) + '</div></div>';
 
     } else {
         let opts = [];
@@ -1007,4 +1011,19 @@ function submitMultipleQuiz() {
             showResults();
         }
     }, 2000);
+}
+
+function renderMedia(val) {
+    if (!val) return '';
+    // Se è un'immagine in base64 o un link web valido
+    const isBase64 = val.startsWith('data:image');
+    const isUrl = (val.startsWith('http://') || val.startsWith('https://')) && 
+                  (val.match(/\.(jpeg|jpg|png|webp|gif)/i) || val.includes('encrypted-tbn0.gstatic.com') || val.includes('images'));
+    
+    if (isBase64 || isUrl) {
+        return '<div style="margin: 15px 0; text-align: center; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 12px; border: 1px solid var(--glass-border);">' +
+               '<img src="' + val + '" style="max-width: 100%; max-height: 350px; border-radius: 8px; object-fit: contain; display: block; margin: 0 auto;" alt="Immagine">' +
+               '</div>';
+    }
+    return val;
 }
