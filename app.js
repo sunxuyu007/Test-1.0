@@ -252,7 +252,10 @@ function renderBrowse() {
             html += '<div class="question-row">' +
                 '<span class="q-type">' + item.type + '</span>' +
                 '<div class="q-text">' + preview + '</div>' +
-                '<button class="delete-btn" title="Elimina" onclick="deleteQuestion(\'' + safeG + '\', ' + idx + ')">&#10005;</button>' +
+                '<div style="display:flex; gap:6px;">' +
+                    '<button class="delete-btn" title="Modifica" onclick="editQuestion(\'' + safeG + '\', ' + idx + ')">✏️</button>' +
+                    '<button class="delete-btn" title="Elimina" onclick="deleteQuestion(\'' + safeG + '\', ' + idx + ')">&#10005;</button>' +
+                '</div>' +
                 '</div>';
         }
         html += '</div></div>';
@@ -784,3 +787,51 @@ document.addEventListener('keydown', function(e) {
     }
     if (e.code === 'Escape') closeModal();
 });
+
+
+// ===== MODIFICA ELEMENTO =====
+function editQuestion(gName, idx) {
+    const item = db[currentS].groups[gName][idx];
+    if (!item) return;
+
+    if (item.type === 'flashcard' || item.type === 'esercizio') {
+        const newQ = prompt("Modifica la domanda:", item.q);
+        if (newQ === null) return;
+        const newA = prompt("Modifica la risposta o lo svolgimento:", item.a);
+        if (newA === null) return;
+
+        item.q = newQ.trim();
+        item.a = newA.trim();
+    } else if (item.type === 'quiz') {
+        const newQ = prompt("Modifica la domanda del quiz:", item.q);
+        if (newQ === null) return;
+        
+        // Trova risposta corretta e sbagliate attuali
+        let currentCorrect = "";
+        let wrongOpts = [];
+        if (item.options) {
+            item.options.forEach(function(opt) {
+                if (opt.isCorrect) currentCorrect = opt.text;
+                else wrongOpts.push(opt.text);
+            });
+        }
+
+        const newCorrect = prompt("Modifica la risposta CORRETTA:", currentCorrect);
+        if (newCorrect === null) return;
+        const newW1 = prompt("Modifica la 1° risposta SBALGIATA:", wrongOpts[0] || "");
+        if (newW1 === null) return;
+        const newW2 = prompt("Modifica la 2° risposta SBAGLIATA:", wrongOpts[1] || "");
+        if (newW2 === null) return;
+
+        item.q = newQ.trim();
+        item.options = [
+            { text: newCorrect.trim(), isCorrect: true },
+            { text: newW1.trim(), isCorrect: false },
+            { text: newW2.trim(), isCorrect: false }
+        ];
+    }
+
+    save();
+    renderBrowse();
+    showToast('Elemento modificato con successo!', 'success');
+}
