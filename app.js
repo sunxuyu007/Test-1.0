@@ -80,7 +80,11 @@ function handleLogin() {
         overlay.style.transition = 'opacity 0.5s ease, filter 0.5s ease';
         overlay.style.opacity = '0';
         overlay.style.filter = 'blur(10px)';
-        setTimeout(function() { overlay.style.display = "none"; renderDash(); showView('view-main'); }, 500);
+        setTimeout(function() { 
+            overlay.style.display = "none"; 
+            renderDash(); 
+            showView('view-main'); 
+        }, 500);
     } else {
         passEl.style.animation = 'wrongShake 0.4s ease';
         passEl.style.borderColor = 'var(--danger)';
@@ -92,12 +96,19 @@ function handleLogin() {
 // ===== DASHBOARD =====
 function renderDash() {
     const g = document.getElementById('main-grid');
+    if (!g) return;
     g.innerHTML = "";
+    
+    // Controlla che db esista e abbia dei corsi
+    if (!db) db = {};
+
     Object.keys(db).forEach(function(m) {
-        const totalItems = Object.values(db[m].groups || {}).reduce(function(s, arr) { 
-            return s + arr.length; 
+        if (!db[m] || !db[m].groups) db[m] = { groups: {} };
+        
+        const totalItems = Object.values(db[m].groups).reduce(function(s, arr) { 
+            return s + (Array.isArray(arr) ? arr.length : 0); 
         }, 0);
-        const groupCount = Object.keys(db[m].groups || {}).length;
+        const groupCount = Object.keys(db[m].groups).length;
 
         const card = document.createElement('div');
         card.className = 'card';
@@ -113,6 +124,22 @@ function renderDash() {
 
         g.appendChild(card);
     });
+
+    // --- CARD AGGIUNGI CORSO ---
+    const addCard = document.createElement('div');
+    addCard.className = 'card';
+    addCard.style.border = '2px dashed var(--glass-border-hover)';
+    addCard.style.display = 'flex';
+    addCard.style.flexDirection = 'column';
+    addCard.style.alignItems = 'center';
+    addCard.style.justifyContent = 'center';
+    addCard.onclick = function() { addNewCourse(); };
+    addCard.innerHTML =
+        '<div class="card-icon icon-settings" style="width:40px; height:40px; font-size:1.2rem; margin-bottom:8px;">➕</div>' +
+        '<h3 style="font-size:1.1rem;">Aggiungi Corso</h3>' +
+        '<p>Crea una nuova materia da studiare</p>';
+    g.appendChild(addCard);
+}
 
     // --- CARD AGGIUNGI CORSO ---
     const addCard = document.createElement('div');
