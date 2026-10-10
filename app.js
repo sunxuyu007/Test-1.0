@@ -516,6 +516,11 @@ function updateProgress() {
 
 // ===== RENDER ITEM =====
 function renderItem() {
+    // Genera il codice per mostrare l'immagine se è presente
+    let imgHtml = '';
+    if (item.image) {
+        imgHtml = '<div style="margin: 14px 0; text-align: center;"><img src="' + item.image + '" style="max-width: 100%; max-height: 260px; border-radius: 8px; border: 1px solid var(--glass-border); object-fit: contain;" alt="Allegato appunti"></div>';
+    }
     const container = document.getElementById('study-content');
     if (!container) return;
     const item = currentList[currentIdx];
@@ -728,9 +733,34 @@ function addManual() {
     const gName = gNameInput ? gNameInput.trim() || "Generale" : "Generale";
     const qInput = document.getElementById('add-q').value;
     const q = qInput ? qInput.trim() : "";
-    if (!q) { showToast('Inserisci il testo della domanda', 'error'); return; }
     
-   let item = { type: type, q: q, enabled: true };
+    // Controlla se c'è almeno del testo o un'immagine allegata
+    const imageInput = document.getElementById('add-image');
+    const hasImage = imageInput && imageInput.files && imageInput.files[0];
+    
+    if (!q && !hasImage) {
+        showToast('Inserisci il testo della domanda o allega un\'immagine', 'error');
+        return;
+    }
+    
+    let item = { type: type, q: q, enabled: true };
+
+    // Se è stata caricata un'immagine, la leggiamo e la convertiamo
+    if (hasImage) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            item.image = e.target.result; // Salva l'immagine convertita in stringa
+            finishAddManual(item, gName);
+        };
+        reader.readAsDataURL(imageInput.files[0]);
+    } else {
+        finishAddManual(item, gName);
+    }
+}
+
+// Funzione di supporto per completare il salvataggio
+function finishAddManual(item, gName) {
+    const type = item.type;
     if (type === 'quiz') {
         const optionRows = document.querySelectorAll('.quiz-option-row');
         const options = [];
@@ -761,14 +791,13 @@ function addManual() {
     if (!db[currentS].groups[gName]) db[currentS].groups[gName] = [];
     db[currentS].groups[gName].push(item);
     save();
-    populateGroupDatalist();
-    showToast('Elemento aggiunto!', 'success');
+    if (typeof populateGroupDatalist === 'function') populateGroupDatalist();
+    showToast('Elemento aggiunto con successo!', 'success');
     
+    // Pulisci i campi del form
     document.getElementById('add-q').value = '';
-    document.getElementById('add-a').value = '';
-    document.getElementById('q-c').value = '';
-    document.getElementById('q-w1').value = '';
-    document.getElementById('q-w2').value = '';
+    if (document.getElementById('add-a')) document.getElementById('add-a').value = '';
+    if (document.getElementById('add-image')) document.getElementById('add-image').value = '';
 }
 
 function doImport() {
