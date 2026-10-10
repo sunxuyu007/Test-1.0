@@ -125,40 +125,44 @@
         </div>
         <div class="panel">
             <h4>&#10133; Aggiungi Manualmente</h4>
-            <select id="add-type"><option value="flashcard">Flashcard</option><option value="quiz">Quiz</option><option value="esercizio">Esercizio Svolto</option></select>
+            <select id="add-type">
+                <option value="flashcard">Flashcard</option>
+                <option value="quiz">Quiz</option>
+                <option value="esercizio">Esercizio Svolto</option>
+            </select>
+            
             <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px;">
-    <input type="text" id="add-group" list="group-options" placeholder="Seleziona o scrivi Sottogruppo..." style="flex: 1;">
-    <datalist id="group-options"></datalist>
-</div>
+                <input type="text" id="add-group" list="group-options" placeholder="Seleziona o scrivi Sottogruppo..." style="flex: 1;">
+                <datalist id="group-options"></datalist>
+            </div>
+            
             <textarea id="add-q" placeholder="Testo domanda o esercizio..." rows="3"></textarea>
             <textarea id="add-a" placeholder="Risposta o Svolgimento completo..." rows="3"></textarea>
+            
             <!-- Campi specifici per Quiz -->
-<div id="quiz-fields" style="display: none; margin-bottom: 15px;">
-    <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Opzioni di risposta (spunta la casella se è corretta):</label>
-    <div id="quiz-options-container" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;">
-    <!-- Le opzioni verranno generate dinamicamente o inserite di default -->
-    <div class="quiz-option-row" style="display: flex; gap: 8px; align-items: center;">
-        <input type="checkbox" class="opt-correct" title="Segna come risposta corretta" style="width: 20px; height: 20px; cursor: pointer;">
-        <input type="text" class="opt-text" placeholder="Risposta (es. Corretta)" style="flex: 1; margin-bottom: 0;">
-        <button type="button" class="delete-btn" onclick="this.parentElement.remove()" title="Rimuovi opzione">✕</button>
-    </div>
-    <div class="quiz-option-row" style="display: flex; gap: 8px; align-items: center;">
-        <input type="checkbox" class="opt-correct" title="Segna come risposta corretta" style="width: 20px; height: 20px; cursor: pointer;">
-        <input type="text" class="opt-text" placeholder="Risposta (es. Sbagliata 1)" style="flex: 1; margin-bottom: 0;">
-        <button type="button" class="delete-btn" onclick="this.parentElement.remove()" title="Rimuovi opzione">✕</button>
-    </div>
-</div>
+            <div id="quiz-fields" style="display: none; margin-bottom: 15px;">
+                <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Opzioni di risposta (spunta la casella se è corretta):</label>
+                <div id="quiz-options-container" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;">
+                    <div class="quiz-option-row" style="display: flex; gap: 8px; align-items: center;">
+                        <input type="checkbox" class="opt-correct" title="Segna come risposta corretta" style="width: 20px; height: 20px; cursor: pointer;">
+                        <input type="text" class="opt-text" placeholder="Risposta (es. Corretta)" style="flex: 1; margin-bottom: 0;">
+                        <button type="button" class="delete-btn" onclick="this.parentElement.remove()" title="Rimuovi opzione">✕</button>
+                    </div>
+                    <div class="quiz-option-row" style="display: flex; gap: 8px; align-items: center;">
+                        <input type="checkbox" class="opt-correct" title="Segna come risposta corretta" style="width: 20px; height: 20px; cursor: pointer;">
+                        <input type="text" class="opt-text" placeholder="Risposta (es. Sbagliata 1)" style="flex: 1; margin-bottom: 0;">
+                        <button type="button" class="delete-btn" onclick="this.parentElement.remove()" title="Rimuovi opzione">✕</button>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-sm btn-ghost" onclick="addQuizOptionRow()" style="font-size:0.85rem; margin-bottom: 12px;">➕ Aggiungi opzione</button>
+            </div>
 
-<!-- Pulsante per aggiungere nuove opzioni al quiz -->
-<button type="button" class="btn btn-sm btn-ghost" onclick="addQuizOptionRow()" style="font-size:0.85rem; margin-bottom: 12px;">+ Aggiungi opzione</button>
+            <!-- Campo per allegare un'immagine (visibile per tutti i tipi) -->
+            <div style="margin-bottom: 15px;">
+                <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Allega immagine (opzionale):</label>
+                <input type="file" id="add-image" accept="image/png, image/jpeg, image/webp" style="width:100%; padding:10px; background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:12px; color:var(--text-main); cursor:pointer;">
+            </div>
 
-<!-- Campo per allegare un'immagine (appunti, slide, foto) -->
-<div style="margin-bottom: 15px;">
-    <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Allega immagine (opzionale):</label>
-    <input type="file" id="add-image" accept="image/png, image/jpeg, image/webp" style="width:100%; padding:10px; background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:12px; color:var(--text-main); cursor:pointer;">
-</div>
-    <button type="button" class="btn btn-sm btn-ghost" onclick="addQuizOptionRow()" style="font-size:0.85rem;">➕ Aggiungi opzione</button>
-</div>
             <button class="btn" onclick="addManual()" style="margin-top:8px;">Salva nel Database</button>
         </div>
         <div class="panel">
