@@ -175,6 +175,7 @@ function openSub(m) {
     const titleEl = document.getElementById('subject-title');
     if (titleEl) titleEl.innerText = m;
     renderDropdown();
+    populateGroupDatalist();
     showView('view-subject-menu');
 }
 
@@ -733,6 +734,7 @@ function addManual() {
     if (!db[currentS].groups[gName]) db[currentS].groups[gName] = [];
     db[currentS].groups[gName].push(item);
     save();
+    populateGroupDatalist();
     showToast('Elemento aggiunto!', 'success');
     
     document.getElementById('add-q').value = '';
@@ -834,4 +836,18 @@ function editQuestion(gName, idx) {
     save();
     renderBrowse();
     showToast('Elemento modificato con successo!', 'success');
+}
+
+// ===== POPOLA MENU TENDINA SOTTOGRUPPI =====
+function populateGroupDatalist() {
+    const datalist = document.getElementById('group-options');
+    if (!datalist) return;
+    datalist.innerHTML = "";
+    
+    const groups = (db[currentS] && db[currentS].groups) ? db[currentS].groups : {};
+    Object.keys(groups).forEach(function(gName) {
+        const option = document.createElement('option');
+        option.value = gName;
+        datalist.appendChild(option);
+    });
 }
