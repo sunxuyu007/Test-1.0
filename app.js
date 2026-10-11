@@ -126,7 +126,6 @@ function renderDash() {
         g.appendChild(card);
     });
 
-    // --- CARD AGGIUNGI CORSO ---
     const newAddCard = document.createElement('div');
     newAddCard.className = 'card';
     newAddCard.style.border = '2px dashed var(--glass-border-hover)';
@@ -142,7 +141,6 @@ function renderDash() {
     g.appendChild(newAddCard);
 }
 
-// ===== AGGIUNGI NUOVO CORSO =====
 function addNewCourse() {
     const courseName = prompt("Inserisci il nome del nuovo corso (es. Fisica Tecnica):");
     if (!courseName) return;
@@ -160,7 +158,6 @@ function addNewCourse() {
     showToast('Corso aggiunto con successo!', 'success');
 }
 
-// ===== ELIMINA CORSO =====
 function deleteCourse(courseName) {
     if (confirm('Sei sicuro di voler eliminare definitivamente il corso "' + courseName + '" e tutti i suoi dati?')) {
         delete db[courseName];
@@ -225,73 +222,6 @@ function updateFilterStatus() {
     const total = document.querySelectorAll('.g-check').length;
     const statusEl = document.getElementById('filter-status');
     if (statusEl) statusEl.innerText = count + '/' + total + ' selezionati';
-}
-
-// ===== GROUP BROWSER =====
-function renderBrowse() {
-    const container = document.getElementById('browse-content');
-    if (!container) return;
-    const groups = db[currentS] && db[currentS].groups ? db[currentS].groups : {};
-    if (Object.keys(groups).length === 0) {
-        container.innerHTML = '<p style="text-align:center; color:var(--text-muted); padding:40px;">Nessun gruppo in questa materia.</p>';
-        return;
-    }
-    let html = '';
-    for (let gName in groups) {
-        const items = groups[gName];
-        const safeG = gName.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-        html += '<div class="group-item">' +
-            '<div class="group-header" onclick="toggleGroup(this)">' +
-            '<div class="group-name"><span class="chevron">&#9654;</span> ' + gName + '</div>' +
-            '<div style="display:flex; align-items:center; gap:10px;">' +
-            '<span class="group-count">' + items.length + ' elementi</span>' +
-            '<button class="delete-btn" title="Elimina gruppo" onclick="event.stopPropagation(); deleteGroup(\'' + safeG + '\')" style="font-size:0.85rem;">&#128465;</button>' +
-            '</div></div><div class="group-body">';
-        for (let idx = 0; idx < items.length; idx++) {
-            const item = items[idx];
-            const preview = (item.q || '').substring(0, 120) + ((item.q || '').length > 120 ? '...' : '');
-            html += '<div class="question-row">' +
-                '<span class="q-type">' + item.type + '</span>' +
-                '<div class="q-text">' + preview + '</div>' +
-                '<div style="display:flex; gap:6px;">' +
-                    '<button class="delete-btn" title="Modifica" onclick="editQuestion(\'' + safeG + '\', ' + idx + ')">✏️</button>' +
-                    '<button class="delete-btn" title="Elimina" onclick="deleteQuestion(\'' + safeG + '\', ' + idx + ')">&#10005;</button>' +
-                '</div>' +
-                '</div>';
-        }
-        html += '</div></div>';
-    }
-    container.innerHTML = html;
-}
-
-function toggleGroup(header) {
-    const chevron = header.querySelector('.chevron');
-    const body = header.nextElementSibling;
-    if (chevron) chevron.classList.toggle('open');
-    if (body) body.classList.toggle('open');
-}
-
-function deleteQuestion(gName, idx) {
-    if (!confirm('Eliminare questa domanda?')) return;
-    if (db[currentS] && db[currentS].groups && db[currentS].groups[gName]) {
-        db[currentS].groups[gName].splice(idx, 1);
-        if (db[currentS].groups[gName].length === 0) delete db[currentS].groups[gName];
-        save();
-        renderBrowse();
-        renderDropdown();
-        showToast('Domanda eliminata', 'info');
-    }
-}
-
-function deleteGroup(gName) {
-    if (!confirm('Eliminare tutto il gruppo "' + gName + '"?')) return;
-    if (db[currentS] && db[currentS].groups) {
-        delete db[currentS].groups[gName];
-        save();
-        renderBrowse();
-        renderDropdown();
-        showToast('Gruppo eliminato', 'info');
-    }
 }
 
 // ===== PRESET MODAL =====
@@ -414,7 +344,7 @@ function launchSession() {
 
     currentList = [];
     const groups = db[currentS] && db[currentS].groups ? db[currentS].groups : {};
-   selected.forEach(function(g) {
+    selected.forEach(function(g) {
         if (groups[g]) {
             groups[g].forEach(function(item) {
                 if (item.type === currentA) {
@@ -522,9 +452,7 @@ function updateProgress() {
     if (progressText) progressText.innerText = (currentIdx + 1) + '/' + currentList.length;
 }
 
-// ===== RENDER ITEM OTTIMIZZATO =====
 // ===== RENDER ITEM =====
-// ===== RENDER ITEM OTTIMIZZATO =====
 function renderItem() {
     const container = document.getElementById('study-content');
     if (!container) return;
@@ -532,7 +460,6 @@ function renderItem() {
     const item = currentList[currentIdx];
     updateProgress();
     
-    // Dichiarazione esatta ed esplicita di entrambe le variabili immagine
     let imgHtml = '';
     if (item.image) {
         imgHtml = '<div style="margin: 15px 0; text-align: center; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 12px; border: 1px solid var(--glass-border);">' +
@@ -575,7 +502,6 @@ function renderItem() {
             '</div>';
 
     } else {
-        // Blocco Quiz
         let opts = [];
         if (item.options) {
             for (let i = 0; i < item.options.length; i++) {
@@ -614,37 +540,11 @@ function renderItem() {
             '</div>';
     }
 }
+
 function revealSolution(btn) {
     const sol = document.getElementById('sol');
     if (sol) sol.style.display = 'block';
     if (btn) btn.style.display = 'none';
-}
-
-function answerQuiz(origIdx, isCorrect, clickedBtn) {
-    if (sessionAnswered[currentIdx] !== null) return;
-    sessionAnswered[currentIdx] = origIdx;
-    if (isCorrect) sessionScore++;
-    const scoreText = document.getElementById('score-text');
-    if (scoreText) scoreText.innerText = sessionScore + '/' + sessionTotal;
-
-    const allBtns = clickedBtn.parentElement.querySelectorAll('.quiz-option');
-    allBtns.forEach(function(b) {
-        b.classList.add('disabled');
-        if (b.getAttribute('data-correct') === 'true') b.classList.add('correct');
-        else if (parseInt(b.getAttribute('data-idx')) === origIdx && !isCorrect) b.classList.add('wrong');
-    });
-
-    if (isCorrect) showToast('Risposta corretta!', 'success');
-    else showToast('Risposta sbagliata!', 'error');
-
-    quizAutoAdvance = setTimeout(function() {
-        quizAutoAdvance = null;
-        if (currentIdx < currentList.length - 1) {
-            nextItem();
-        } else {
-            showResults();
-        }
-    }, 1500);
 }
 
 function nextItem() {
@@ -671,13 +571,8 @@ function showResults() {
     const elapsed = timerLimit > 0 ? (timerLimit - Math.max(timerSeconds, 0)) : timerSeconds;
     const timeStr = formatTime(elapsed);
     const pct = sessionTotal > 0 ? Math.round((sessionScore / sessionTotal) * 100) : 0;
-
-    // --- CALCOLO ERRORI DELLA SESSIONE ---
-    // Per i quiz calcoliamo gli errori come totali meno quelli corretti. 
-    // Per flashcard ed esercizi, consideriamo eventuali risposte non note o possiamo tracciarle.
     let sessionErrors = sessionTotal - sessionScore;
 
-    // --- SALVATAGGIO STATISTICHE NEL DATABASE DEL CORSO ---
     if (currentS && currentA) {
         if (!db[currentS]) db[currentS] = { groups: {} };
         if (!db[currentS].stats) db[currentS].stats = {};
@@ -690,10 +585,9 @@ function showResults() {
         stat.totalTime += elapsed;
         stat.totalErrors += sessionErrors;
 
-        save(); // Scrive immediatamente su database.json e localStorage!
+        save();
     }
 
-    // Il resto della funzione per mostrare il punteggio...
     const scoreKey = currentS + '_' + currentA;
     const prev = scores[scoreKey];
     let isNewBest = false;
@@ -732,6 +626,7 @@ function showResults() {
     if (resultsContent) resultsContent.innerHTML = html;
     showView('view-results');
 }
+
 // ===== UTILS =====
 async function connectToFile() {
     try {
@@ -746,10 +641,7 @@ async function connectToFile() {
 }
 
 async function save() {
-    // 1. Salvataggio di sicurezza locale nel browser
     localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
-    
-    // 2. Scrittura fisica e persistente sul file JSON esterno tramite File System API
     if (fileHandle) {
         try {
             const writable = await fileHandle.createWritable();
@@ -772,7 +664,9 @@ function showView(id) {
         target.style.animation = 'none';
         target.offsetHeight;
         target.style.animation = '';
-        if (id === 'view-browse') renderBrowse();
+        if (id === 'view-browse') {
+            initSearchFilters();
+        }
     }
 }
 
@@ -809,7 +703,6 @@ function addManual() {
     
     let item = { type: type, q: q, enabled: true };
 
-    // Funzione interna per comprimere l'immagine in Base64 tramite Canvas
     function compressAndConvert(file, callback) {
         const reader = new FileReader();
         reader.onload = function(e) {
@@ -840,7 +733,6 @@ function addManual() {
         reader.readAsDataURL(file);
     }
 
-    // Gestione concatenata sicura di entrambe le immagini
     if (hasImage) {
         compressAndConvert(imageInput.files[0], function(base64Q) {
             item.image = base64Q;
@@ -862,7 +754,7 @@ function addManual() {
         finishAddManual(item, gName);
     }
 }
-// Funzione di supporto per completare il salvataggio
+
 function finishAddManual(item, gName) {
     const type = item.type;
     if (type === 'quiz') {
@@ -899,7 +791,6 @@ function finishAddManual(item, gName) {
     if (typeof renderDropdown === 'function') renderDropdown();
     showToast('Elemento aggiunto con successo!', 'success');
     
-   // Pulisci i campi del form
     document.getElementById('add-q').value = '';
     if (document.getElementById('add-a')) document.getElementById('add-a').value = '';
     if (document.getElementById('add-image')) document.getElementById('add-image').value = '';
@@ -951,54 +842,6 @@ document.addEventListener('keydown', function(e) {
     }
     if (e.code === 'Escape') closeModal();
 });
-
-
-// ===== MODIFICA ELEMENTO =====
-function editQuestion(gName, idx) {
-    const item = db[currentS].groups[gName][idx];
-    if (!item) return;
-
-    if (item.type === 'flashcard' || item.type === 'esercizio') {
-        const newQ = prompt("Modifica la domanda:", item.q);
-        if (newQ === null) return;
-        const newA = prompt("Modifica la risposta o lo svolgimento:", item.a);
-        if (newA === null) return;
-
-        item.q = newQ.trim();
-        item.a = newA.trim();
-    } else if (item.type === 'quiz') {
-        const newQ = prompt("Modifica la domanda del quiz:", item.q);
-        if (newQ === null) return;
-        
-        // Trova risposta corretta e sbagliate attuali
-        let currentCorrect = "";
-        let wrongOpts = [];
-        if (item.options) {
-            item.options.forEach(function(opt) {
-                if (opt.isCorrect) currentCorrect = opt.text;
-                else wrongOpts.push(opt.text);
-            });
-        }
-
-        const newCorrect = prompt("Modifica la risposta CORRETTA:", currentCorrect);
-        if (newCorrect === null) return;
-        const newW1 = prompt("Modifica la 1° risposta SBALGIATA:", wrongOpts[0] || "");
-        if (newW1 === null) return;
-        const newW2 = prompt("Modifica la 2° risposta SBAGLIATA:", wrongOpts[1] || "");
-        if (newW2 === null) return;
-
-        item.q = newQ.trim();
-        item.options = [
-            { text: newCorrect.trim(), isCorrect: true },
-            { text: newW1.trim(), isCorrect: false },
-            { text: newW2.trim(), isCorrect: false }
-        ];
-    }
-
-    save();
-    renderBrowse();
-    showToast('Elemento modificato con successo!', 'success');
-}
 
 // ===== POPOLA MENU TENDINA SOTTOGRUPPI =====
 function populateGroupDatalist() {
@@ -1057,7 +900,6 @@ function submitMultipleQuiz() {
             selectedIndices.push(idx);
         }
 
-        // Condizione di correttezza: deve aver selezionato tutte le corrette e nessuna errata
         if (isSelected !== isCorrect) {
             allCorrect = false;
         }
@@ -1074,7 +916,6 @@ function submitMultipleQuiz() {
     const scoreText = document.getElementById('score-text');
     if (scoreText) scoreText.innerText = sessionScore + '/' + sessionTotal;
 
-    // Evidenzia visivamente le risposte corrette e sbagliate
     checkboxes.forEach(function(cb) {
         cb.disabled = true;
         const row = cb.closest('.quiz-option-checkbox-row');
@@ -1106,33 +947,24 @@ function submitMultipleQuiz() {
 
 function renderMedia(val) {
     if (!val) return '';
-    
-    // Se è un'immagine in formato Base64 (caricata dal PC)
     if (val.startsWith('data:image')) {
         return '<div style="margin: 15px 0; text-align: center; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 12px; border: 1px solid var(--glass-border);">' +
                '<img src="' + val + '" style="max-width: 100%; max-height: 350px; border-radius: 8px; object-fit: contain; display: block; margin: 0 auto;" alt="Immagine">' +
                '</div>';
     }
-    
-    // Espressione regolare per trovare tutti i link di immagini nel testo
     const urlRegex = /(https?:\/\/[^\s]+?\.(?:jpeg|jpg|png|webp|gif)(?:\?[^\s]*)?)/gi;
-    
     if (urlRegex.test(val)) {
-        // Sostituisce ogni link trovato con il rispettivo box immagine centrato
         let processed = val.replace(urlRegex, function(url) {
             return '<div style="margin: 15px 0; text-align: center; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 12px; border: 1px solid var(--glass-border);">' +
                    '<img src="' + url + '" style="max-width: 100%; max-height: 350px; border-radius: 8px; object-fit: contain; display: block; margin: 0 auto;" alt="Immagine">' +
                    '</div>';
         });
-        // Conviene preservare i "a capo" del testo trasformandoli in <br>
         return processed.replace(/\n/g, '<br>');
     }
-    
-    // Se è solo testo semplice, preserva comunque i "a capo"
     return val.replace(/\n/g, '<br>');
 }
 
-// ===== VISUALIZZA STATISTICHE & GRAFICI =====
+// ===== STATISTICHE =====
 function openStatsView() {
     const container = document.getElementById('stats-content');
     if (!container) return;
@@ -1145,7 +977,6 @@ function openStatsView() {
     ];
 
     let html = '<h3 style="margin-bottom:20px; font-size:1.2rem; color:var(--text-main);">Riepilogo Medie &mdash; ' + currentS + '</h3>';
-    
     let hasData = false;
 
     types.forEach(function(t) {
@@ -1154,64 +985,46 @@ function openStatsView() {
             hasData = true;
             const avgTime = Math.round(data.totalTime / data.sessions);
             const avgErrors = (data.totalErrors / data.sessions).toFixed(1);
-            
-            // Calcolo larghezza percentuale per le barre del grafico
             const timeBarWidth = Math.min(100, (avgTime / 60) * 20);
             const errorBarWidth = Math.min(100, avgErrors * 15);
 
             html += '<div class="stat-card-item">' +
                 '<h4 style="margin-bottom:10px; color:var(--accent); font-size:1.05rem;">' + t.label + ' <span style="font-size:0.8rem; color:var(--text-muted); font-weight:normal;">(Sessioni: ' + data.sessions + ')</span></h4>' +
-                
-                // Barra Tempo Medio
                 '<div style="font-size:0.85rem; margin-bottom:2px; color:var(--text-main);">⏱️ Tempo Medio: <strong>' + formatTime(avgTime) + '</strong></div>' +
-                '<div class="stat-bar-track">' +
-                '<div class="stat-bar-time" style="width:' + timeBarWidth + '%;"></div>' +
-                '</div>' +
-
-                // Barra Errori Medi
+                '<div class="stat-bar-track"><div class="stat-bar-time" style="width:' + timeBarWidth + '%;"></div></div>' +
                 '<div style="font-size:0.85rem; margin-bottom:2px; color:var(--text-main);">❌ Errori Medi per sessione: <strong>' + avgErrors + '</strong></div>' +
-                '<div class="stat-bar-track">' +
-                '<div class="stat-bar-error" style="width:' + errorBarWidth + '%;"></div>' +
-                '</div>' +
-
+                '<div class="stat-bar-track"><div class="stat-bar-error" style="width:' + errorBarWidth + '%;"></div></div>' +
                 '</div>';
         }
     });
 
     if (!hasData) {
-        html += '<p style="text-align:center; color:var(--text-muted); padding:30px;">Nessuna statistica registrata per questo corso. Completa qualche sessione di studio per visualizzare i grafici!</p>';
+        html += '<p style="text-align:center; color:var(--text-muted); padding:30px;">Nessuna statistica registrata per questo corso.</p>';
     }
 
     container.innerHTML = html;
     showView('view-stats');
 }
 
-// ===== SCARICA DATABASE (Funziona su PC e Mobile) =====
+// ===== BACKUP & IMPORT =====
 function downloadDatabase() {
     try {
         const dataStr = JSON.stringify(db, null, 2);
         const blob = new Blob([dataStr], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
-        
         const downloadAnchor = document.createElement('a');
         downloadAnchor.href = url;
         downloadAnchor.download = 'database.json';
-        
         document.body.appendChild(downloadAnchor);
         downloadAnchor.click();
-        
-        // Pulizia
         document.body.removeChild(downloadAnchor);
         URL.revokeObjectURL(url);
-        
         showToast('Backup scaricato con successo!', 'success');
     } catch (e) {
-        console.error("Errore durante il download del file:", e);
         showToast('Errore durante il download del file', 'error');
     }
 }
 
-// ===== IMPORTA DATABASE DA FILE (PC e Mobile) =====
 function importDatabaseFromFile(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -1219,28 +1032,22 @@ function importDatabaseFromFile(event) {
     const reader = new FileReader();
     reader.onload = function(e) {
         try {
-            const content = e.target.result;
-            const parsedData = JSON.parse(content);
-            
-            // Chiediamo all'utente se vuole sostituire o unire i dati
-            const replace = confirm("Vuoi SOVRASCRIVERE completamente il database attuale?\n\n• OK = Sostituisci tutto con il file importato\n• Annulla = Unisci i corsi e i dati con quelli esistenti");
+            const parsedData = JSON.parse(e.target.result);
+            const replace = confirm("Vuoi SOVRASCRIVERE completamente il database attuale?\n\n• OK = Sostituisci tutto\n• Annulla = Unisci i corsi");
 
             if (replace) {
                 db = parsedData;
             } else {
-                // Logica di unione intelligente dei corsi
                 for (let course in parsedData) {
                     if (!db[course]) {
                         db[course] = parsedData[course];
                     } else {
-                        // Unisce i gruppi
                         if (parsedData[course].groups) {
                             if (!db[course].groups) db[course].groups = {};
                             for (let g in parsedData[course].groups) {
                                 db[course].groups[g] = parsedData[course].groups[g];
                             }
                         }
-                        // Unisce le statistiche se presenti
                         if (parsedData[course].stats) {
                             if (!db[course].stats) db[course].stats = {};
                             for (let s in parsedData[course].stats) {
@@ -1251,29 +1058,18 @@ function importDatabaseFromFile(event) {
                 }
             }
 
-            // Salva sul file fisico (se connesso) e sul localStorage
             save();
             renderDash();
             showToast('Database importato con successo!', 'success');
-            
         } catch (err) {
-            console.error("Errore nel parsing del file JSON:", err);
-            showToast('Errore: il file JSON non è valido o è corrotto!', 'error');
+            showToast('Errore: file JSON non valido o corrotto!', 'error');
         }
-        
-        // Pulisce l'input per permettere di riselezionare lo stesso file se necessario
         event.target.value = '';
     };
     reader.readAsText(file);
 }
 
-// ===== APRI LA VISTA GRUPPI E INIZIALIZZA FILTRI =====
-function openGroupsView() {
-    initSearchFilters();
-    showView('view-groups');
-}
-
-// ===== INIZIALIZZA FILTRI E RICERCA =====
+// ===== FILTRI E GESTIONE GRUPPI & MODIFICA (UNIFICATO E RIPULITO) =====
 function initSearchFilters() {
     const groupSelect = document.getElementById('filter-group');
     if (!groupSelect) return;
@@ -1285,7 +1081,6 @@ function initSearchFilters() {
         const option = document.createElement('option');
         option.value = gName;
         option.textContent = gName;
-        // Imposta lo stile scuro per le opzioni del menu a tendina
         option.style.background = '#0f172a';
         option.style.color = '#fff';
         groupSelect.appendChild(option);
@@ -1298,7 +1093,7 @@ function initSearchFilters() {
 
     filterQuestions();
 }
-// ===== VISTA CLASSICA A GRUPPI ESPANDIBILI (SE NESSUNA RICERCA) =====
+
 function renderClassicGroupsView(container) {
     const groups = db[currentS].groups;
     if (!groups || Object.keys(groups).length === 0) {
@@ -1325,7 +1120,10 @@ function renderClassicGroupsView(container) {
             html += '<div class="question-row">' +
                 '<span class="q-type">' + (item.type || 'flashcard') + '</span>' +
                 '<div class="q-text">' + preview + '</div>' +
-                '<button class="delete-btn" title="Elimina" onclick="deleteQuestion(\'' + safeG + '\', ' + idx + ')">&#10005;</button>' +
+                '<div style="display:flex; gap:6px;">' +
+                    '<button class="delete-btn" title="Modifica" onclick="openEditModal(\'' + safeG + '\', ' + idx + ')">✏️</button>' +
+                    '<button class="delete-btn" title="Elimina" onclick="deleteQuestion(\'' + safeG + '\', ' + idx + ')">&#10005;</button>' +
+                '</div>' +
                 '</div>';
         }
         html += '</div></div>';
@@ -1345,7 +1143,7 @@ function deleteQuestion(gName, idx) {
     db[currentS].groups[gName].splice(idx, 1);
     if (db[currentS].groups[gName].length === 0) delete db[currentS].groups[gName];
     save();
-    filterQuestions(); // Aggiorna la vista corrente mantenendo i filtri/ricerca
+    filterQuestions();
     renderDropdown();
     showToast('Domanda eliminata', 'info');
 }
@@ -1371,7 +1169,6 @@ function filterQuestions() {
     const selectedType = typeSelect ? typeSelect.value : 'all';
     const selectedGroup = groupSelect ? groupSelect.value : 'all';
 
-    // Se non ci sono criteri di ricerca attivi, mostra la vista classica a gruppi espandibili
     if (query === '' && selectedType === 'all' && selectedGroup === 'all') {
         renderClassicGroupsView(container);
         return;
@@ -1390,12 +1187,11 @@ function filterQuestions() {
         let groupItemsCount = 0;
 
         items.forEach(function(item, idx) {
-            const qText = item.q || ''; // Legge correttamente la proprietà q del tuo JSON
+            const qText = item.q || '';
             const itemType = item.type || (item.options ? 'quiz' : 'flashcard');
 
             if (selectedType !== 'all' && itemType !== selectedType) return;
 
-            // Ricerca testuale focalizzata sul testo della domanda (q) e opzioni/risposte
             const aText = item.a || '';
             const optsText = Array.isArray(item.options) ? item.options.map(o => o.text).join(' ') : '';
             const fullContent = (qText + ' ' + aText + ' ' + optsText).toLowerCase();
@@ -1404,13 +1200,15 @@ function filterQuestions() {
                 groupItemsCount++;
                 totalFound++;
 
-                const badgeColor = itemType === 'flashcard' ? 'var(--primary)' : 'var(--success)';
                 const safeG = gName.replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
                 groupHtml += '<div class="question-row" style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:12px 14px; border-radius:12px; background:rgba(255,255,255,0.02); margin:6px 0; border:1px solid var(--glass-border);">' +
                     '<span class="q-type" style="background:rgba(99,102,241,0.15); color:var(--primary-light); padding:3px 10px; border-radius:8px; font-weight:600; font-size:0.72rem; text-transform:uppercase;">' + itemType + '</span>' +
                     '<div class="q-text" style="flex:1; font-size:0.88rem; line-height:1.5; color:var(--text);">' + qText + '</div>' +
-                    '<button class="delete-btn" title="Elimina" onclick="deleteQuestion(\'' + safeG + '\', ' + idx + ')">&#10005;</button>' +
+                    '<div style="display:flex; gap:6px;">' +
+                        '<button class="delete-btn" title="Modifica" onclick="openEditModal(\'' + safeG + '\', ' + idx + ')">✏️</button>' +
+                        '<button class="delete-btn" title="Elimina" onclick="deleteQuestion(\'' + safeG + '\', ' + idx + ')">&#10005;</button>' +
+                    '</div>' +
                     '</div>';
             }
         });
@@ -1432,9 +1230,10 @@ function filterQuestions() {
     container.innerHTML = html;
 }
 
-// ===== APRI MODALE DI MODIFICA DOMANDA =====
+// ===== MODALE DI MODIFICA DOMANDA =====
 function openEditModal(gName, idx) {
     const item = db[currentS].groups[gName][idx];
+    if (!item) return;
     const isQuiz = item.type === 'quiz';
     
     let html = '<div class="modal-overlay" onclick="if(event.target===this)closeModal()">' +
@@ -1448,7 +1247,7 @@ function openEditModal(gName, idx) {
     if (isQuiz) {
         html += '<label style="font-size:0.82rem; color:var(--text-muted); display:block; margin-top:10px;">Opzioni del Quiz</label><div id="edit-quiz-fields" style="margin-top:6px;">';
         if (item.options) {
-            item.options.forEach((opt, oIdx) => {
+            item.options.forEach((opt) => {
                 html += '<div style="display:flex; gap:8px; margin-bottom:8px; align-items:center;">' +
                     '<input type="text" class="edit-opt-text" value="' + opt.text.replace(/"/g, '&quot;') + '" style="margin:0; flex:1;">' +
                     '<label style="font-size:0.8rem; display:flex; align-items:center; gap:4px; white-space:nowrap;"><input type="checkbox" class="edit-opt-correct" ' + (opt.isCorrect ? 'checked' : '') + '> Corretta</label>' +
@@ -1469,7 +1268,6 @@ function openEditModal(gName, idx) {
     document.getElementById('modal-root').innerHTML = html;
 }
 
-// ===== SALVA LE MODIFICHE DELLA DOMANDA =====
 function saveEditedQuestion(oldGName, idx) {
     const item = db[currentS].groups[oldGName][idx];
     const newGName = document.getElementById('edit-group').value.trim() || oldGName;
@@ -1497,7 +1295,6 @@ function saveEditedQuestion(oldGName, idx) {
         if (editA) item.a = editA.value;
     }
 
-    // Se è cambiato il nome del gruppo, sposta l'elemento nel nuovo gruppo
     if (newGName !== oldGName) {
         db[currentS].groups[oldGName].splice(idx, 1);
         if (db[currentS].groups[oldGName].length === 0) delete db[currentS].groups[oldGName];
