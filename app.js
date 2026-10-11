@@ -515,6 +515,7 @@ function updateProgress() {
 }
 
 // ===== RENDER ITEM OTTIMIZZATO =====
+// ===== RENDER ITEM =====
 function renderItem() {
     const container = document.getElementById('study-content');
     if (!container) return;
@@ -522,14 +523,12 @@ function renderItem() {
     const item = currentList[currentIdx];
     updateProgress();
     
-    // Gestione unificata e sicura dell'immagine (sia locale in item.image che web in item.q)
+    // Genera il blocco immagine solo se item.image esiste ed è valorizzato
     let imgHtml = '';
     if (item.image) {
-        imgHtml = '<div style="margin: 15px 0; text-align: center; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 12px; border: 1px solid var(--glass-border);">' +
-                  '<img src="' + item.image + '" style="max-width: 100%; max-height: 350px; border-radius: 8px; object-fit: contain; display: block; margin: 0 auto;" alt="Immagine locale">' +
+        imgHtml = '<div style="margin: 15px 0; text-align: center; background: rgba(0,0,0,0.4); padding: 12px; border-radius: 14px; border: 1px solid var(--glass-border);">' +
+                  '<img src="' + item.image + '" style="max-width: 100%; max-height: 350px; border-radius: 10px; object-fit: contain; display: block; margin: 0 auto;" alt="Immagine">' +
                   '</div>';
-    } else if (item.q && (item.q.startsWith('http://') || item.q.startsWith('https://')) && (item.q.match(/\.(jpeg|jpg|png|webp|gif)/i) || item.q.includes('encrypted-tbn0.gstatic.com') || item.q.includes('images'))) {
-        imgHtml = renderMedia(item.q);
     }
 
     if (currentA === 'flashcard') {
@@ -558,7 +557,6 @@ function renderItem() {
             '<div id="sol" class="solution-box">' + renderMedia(item.a) + '</div></div>';
 
     } else {
-        // Blocco Quiz
         let opts = [];
         if (item.options) {
             for (let i = 0; i < item.options.length; i++) {
@@ -750,17 +748,44 @@ function addManual() {
     
     let item = { type: type, q: q, enabled: true };
 
-    // Se è stata caricata un'immagine dal PC, la leggiamo prima di procedere
     if (hasImage) {
+        const file = imageInput.files[0];
         const reader = new FileReader();
         reader.onload = function(e) {
-            item.image = e.target.result; // Salva la stringa Base64 dell'immagine
-            finishAddManual(item, gName);
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                const maxDim = 800; // Ridimensionamento ottimale per il browser
+                
+                if (width > height && width > maxDim) {
+                    height *= maxDim / width;
+                    width = maxDim;
+                } else if (height > maxDim) {
+                    width *= maxDim / height;
+                    height = maxDim;
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                // Converte in JPEG compresso (qualità 0.8) leggerissimo per il database
+                item.image = canvas.toDataURL('image/jpeg', 0.8);
+                finishAddManual(item, gName);
+            };
+            img.onerror = function() {
+                item.image = e.target.result;
+                finishAddManual(item, gName);
+            };
+            img.src = e.target.result;
         };
         reader.onerror = function() {
-            showToast('Errore durante la lettura dell\'immagine', 'error');
+            showToast('Errore durante la lettura del file', 'error');
         };
-        reader.readAsDataURL(imageInput.files[0]);
+        reader.readAsDataURL(file);
     } else {
         finishAddManual(item, gName);
     }
