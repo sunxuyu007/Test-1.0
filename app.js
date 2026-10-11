@@ -514,7 +514,7 @@ function updateProgress() {
     if (progressText) progressText.innerText = (currentIdx + 1) + '/' + currentList.length;
 }
 
-// ===== RENDER ITEM =====
+// ===== RENDER ITEM OTTIMIZZATO =====
 function renderItem() {
     const container = document.getElementById('study-content');
     if (!container) return;
@@ -522,12 +522,14 @@ function renderItem() {
     const item = currentList[currentIdx];
     updateProgress();
     
-    // Controlliamo in modo pulito se c'è un'immagine locale o un link web
-    let mediaHtml = '';
+    // Gestione unificata e sicura dell'immagine (sia locale in item.image che web in item.q)
+    let imgHtml = '';
     if (item.image) {
-        mediaHtml = renderMedia(item.image);
+        imgHtml = '<div style="margin: 15px 0; text-align: center; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 12px; border: 1px solid var(--glass-border);">' +
+                  '<img src="' + item.image + '" style="max-width: 100%; max-height: 350px; border-radius: 8px; object-fit: contain; display: block; margin: 0 auto;" alt="Immagine locale">' +
+                  '</div>';
     } else if (item.q && (item.q.startsWith('http://') || item.q.startsWith('https://')) && (item.q.match(/\.(jpeg|jpg|png|webp|gif)/i) || item.q.includes('encrypted-tbn0.gstatic.com') || item.q.includes('images'))) {
-        mediaHtml = renderMedia(item.q);
+        imgHtml = renderMedia(item.q);
     }
 
     if (currentA === 'flashcard') {
@@ -536,8 +538,8 @@ function renderItem() {
             '<div class="flip-inner">' +
             '<div class="flip-front">' +
             '<span class="badge">' + item.gRef + '</span>' +
-            mediaHtml +
-            (item.image ? '' : '<div style="font-size:1.25rem; line-height:1.6; font-weight:500;">' + item.q + '</div>') +
+            imgHtml +
+            (item.q ? '<div style="font-size:1.25rem; line-height:1.6; font-weight:500; margin-top:10px;">' + item.q + '</div>' : '') +
             '<span class="flip-hint">🔄 Clicca per girare</span></div>' +
             '<div class="flip-back">' +
             '<span class="badge" style="background:linear-gradient(135deg, var(--success), var(--accent));">RISPOSTA</span>' +
@@ -546,15 +548,17 @@ function renderItem() {
             '</div></div>';
 
     } else if (currentA === 'esercizio') {
-       container.innerHTML =
+        container.innerHTML =
             '<div class="exercise-card">' +
             '<span class="badge">' + item.gRef + '</span>' +
             '<h3 style="font-size:1.2rem; margin:10px 0;">Esercizio</h3>' +
             imgHtml +
-            '<p style="font-size:1.05rem; margin-bottom:24px; line-height:1.7; color:var(--text-main);">' + item.q + '</p>' +
+            (item.q ? '<p style="font-size:1.05rem; margin-bottom:24px; line-height:1.7; color:var(--text-main);">' + item.q + '</p>' : '') +
             '<button class="btn btn-success" onclick="revealSolution(this)">Mostra Svolgimento</button>' +
             '<div id="sol" class="solution-box">' + renderMedia(item.a) + '</div></div>';
+
     } else {
+        // Blocco Quiz
         let opts = [];
         if (item.options) {
             for (let i = 0; i < item.options.length; i++) {
@@ -586,8 +590,8 @@ function renderItem() {
         container.innerHTML =
             '<div class="exercise-card">' +
             '<span class="badge">' + item.gRef + '</span>' +
-            '<h3 style="font-size:1.15rem; margin-bottom:15px; line-height:1.5;">' + item.q + '</h3>' +
-            mediaHtml +
+            (item.q ? '<h3 style="font-size:1.15rem; margin-bottom:15px; line-height:1.5;">' + item.q + '</h3>' : '') +
+            imgHtml +
             optHtml +
             '<button class="btn" id="btn-submit-quiz" onclick="submitMultipleQuiz()" ' + btnState + ' style="margin-top:15px; width:100%;">Conferma Risposta 🎯</button>' +
             '</div>';
