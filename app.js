@@ -188,6 +188,7 @@ function confirmAddCourse() {
 }
 
 // ===== MODIFICA NOME CORSO (MODALE PERSONALIZZATA) =====
+// ===== MODIFICA NOME CORSO (MODALE PERSONALIZZATA) =====
 function editCourse(oldName) {
     let html = '<div class="modal-overlay" onclick="if(event.target===this)closeModal()">' +
         '<div class="modal-card">' +
@@ -213,7 +214,7 @@ function editCourse(oldName) {
 }
 
 function confirmEditCourse(oldName) {
-   const input = document.getElementById('modal-edit-course-name');
+    const input = document.getElementById('modal-edit-course-name');
     if (!input) return;
     const newName = input.value.trim();
     if (!newName || newName === oldName) {
