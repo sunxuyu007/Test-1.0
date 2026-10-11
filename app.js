@@ -541,7 +541,6 @@ function updateProgress() {
     if (progressText) progressText.innerText = (currentIdx + 1) + '/' + currentList.length;
 }
 
-// ===== RENDER ITEM =====
 function renderItem() {
     const container = document.getElementById('study-content');
     if (!container) return;
@@ -628,6 +627,9 @@ function renderItem() {
             '<button class="btn" id="btn-submit-quiz" onclick="submitMultipleQuiz()" ' + btnState + ' style="margin-top:15px; width:100%;">Conferma Risposta 🎯</button>' +
             '</div>';
     }
+
+    // 🚀 Attiva il rendering LaTeX in tempo reale sulla card appena creata
+    renderMathInContainer(container);
 }
 
 function revealSolution(btn) {
@@ -1578,4 +1580,41 @@ function getImagesHtml(imagesArray, singleImage) {
                 '</div>';
     });
     return html;
+}
+
+// ===== FORMATTAZIONE TESTO: IMMAGINI + LATEX =====
+function formatText(val) {
+    if (!val) return '';
+    
+    // 1. Gestione immagini Base64 o link (come visto in precedenza)
+    if (val.startsWith('data:image')) {
+        return '<div style="margin: 15px 0; text-align: center; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 12px; border: 1px solid var(--glass-border);">' +
+               '<img src="' + val + '" style="max-width: 100%; max-height: 350px; border-radius: 8px; object-fit: contain; display: block; margin: 0 auto;" alt="Immagine">' +
+               '</div>';
+    }
+    
+    const urlRegex = /(https?:\/\/[^\s]+?\.(?:jpeg|jpg|png|webp|gif)(?:\?[^\s]*)?|https?:\/\/[^\s]+?gstatic\.com\/images[^\s]*|https?:\/\/[^\s]+?\?q=tbn[^\s]*)/gi;
+    
+    let processed = val.replace(urlRegex, function(url) {
+        return '<div style="margin: 15px 0; text-align: center; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 12px; border: 1px solid var(--glass-border);">' +
+               '<img src="' + url + '" style="max-width: 100%; max-height: 350px; border-radius: 8px; object-fit: contain; display: block; margin: 0 auto;" alt="Immagine">' +
+               '</div>';
+    });
+    
+    return processed.replace(/\n/g, '<br>');
+}
+
+// ===== ATTIVA IL RENDER LATEX SU UN ELEMENTO =====
+function renderMathInContainer(element) {
+    if (window.renderMathInElement && element) {
+        window.renderMathInElement(element, {
+            delimiters: [
+                {left: '$$', right: '$$', display: true},   // Formule in blocco (centrate)
+                {left: '$', right: '$', display: false},     // Formule in linea (inline)
+                {left: '\\(', right: '\\)', display: false},
+                {left: '\\[', right: '\\]', display: true}
+            ],
+            throwOnError: false
+        });
+    }
 }
