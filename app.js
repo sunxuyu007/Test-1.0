@@ -74,22 +74,34 @@ let timerLimit = 0;
 let randomizeOrder = true;
 let quizAutoAdvance = null;
 
+
+// Funzione di supporto per calcolare l'hash SHA-256 di una stringa
+async function sha256(message) {
+    const msgBuffer = new TextEncoder().encode(message);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 // ===== LOGIN =====
 async function handleLogin() {
+   const userEl = document.getElementById('user');
     const passEl = document.getElementById('pass');
-    const password = passEl.value;
     
-    // Calcola l'hash SHA-256 della password inserita dall'utente
-    const encoder = new TextEncoder();
-    const data = encoder.encode(password);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    const inputUser = userEl ? userEl.value.trim() : "";
+    const inputPass = passEl ? passEl.value : "";
     
-    // Questo è l'hash SHA-256 corrispondente alla password "一二三四"
-    const correctHash = "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4";
+    // Hash SHA-256 preimpostati:
+    // Username di default: "xxxxx" -> 8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918
+    // Password di default: "xxxxx"  -> 03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4
+    const correctUserHash = "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918";
+    const correctPassHash = "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4";
 
-    if (hashHex === correctHash) {
+    // Calcola l'hash di ciò che l'utente ha digitato
+    const inputUserHash = await sha256(inputUser);
+    const inputPassHash = await sha256(inputPass);
+
+    if (inputUserHash === correctUserHash && inputPassHash === correctPassHash) {
         const overlay = document.getElementById('login-overlay');
         overlay.style.transition = 'opacity 0.5s ease, filter 0.5s ease';
         overlay.style.opacity = '0';
@@ -100,10 +112,12 @@ async function handleLogin() {
             showView('view-main'); 
         }, 500);
     } else {
-        passEl.style.animation = 'wrongShake 0.4s ease';
-        passEl.style.borderColor = 'var(--danger)';
-        setTimeout(function() { passEl.style.animation = ''; passEl.style.borderColor = ''; }, 500);
-        showToast('Credenziali errate', 'error');
+        if (passEl) {
+            passEl.style.animation = 'wrongShake 0.4s ease';
+            passEl.style.borderColor = 'var(--danger)';
+            setTimeout(function() { passEl.style.animation = ''; passEl.style.borderColor = ''; }, 500);
+        }
+        showToast('Username o password errati', 'error');
     }
 }
 
