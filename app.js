@@ -1067,8 +1067,28 @@ function submitMultipleQuiz() {
 
 function renderMedia(val) {
     if (!val) return '';
-    // Restituisce direttamente il tag img sia per i file locali (Base64) sia per i link web
-    return '<div style="margin: 15px 0; text-align: center; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 12px; border: 1px solid var(--glass-border);">' +
-           '<img src="' + val + '" style="max-width: 100%; max-height: 320px; border-radius: 8px; object-fit: contain; display: block; margin: 0 auto;" alt="Immagine">' +
-           '</div>';
+    
+    // Se è un'immagine in formato Base64 (caricata dal PC)
+    if (val.startsWith('data:image')) {
+        return '<div style="margin: 15px 0; text-align: center; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 12px; border: 1px solid var(--glass-border);">' +
+               '<img src="' + val + '" style="max-width: 100%; max-height: 350px; border-radius: 8px; object-fit: contain; display: block; margin: 0 auto;" alt="Immagine">' +
+               '</div>';
+    }
+    
+    // Espressione regolare per trovare tutti i link di immagini nel testo
+    const urlRegex = /(https?:\/\/[^\s]+?\.(?:jpeg|jpg|png|webp|gif)(?:\?[^\s]*)?)/gi;
+    
+    if (urlRegex.test(val)) {
+        // Sostituisce ogni link trovato con il rispettivo box immagine centrato
+        let processed = val.replace(urlRegex, function(url) {
+            return '<div style="margin: 15px 0; text-align: center; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 12px; border: 1px solid var(--glass-border);">' +
+                   '<img src="' + url + '" style="max-width: 100%; max-height: 350px; border-radius: 8px; object-fit: contain; display: block; margin: 0 auto;" alt="Immagine">' +
+                   '</div>';
+        });
+        // Conviene preservare i "a capo" del testo trasformandoli in <br>
+        return processed.replace(/\n/g, '<br>');
+    }
+    
+    // Se è solo testo semplice, preserva comunque i "a capo"
+    return val.replace(/\n/g, '<br>');
 }
