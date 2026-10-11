@@ -191,7 +191,7 @@
             
             <textarea id="add-q" placeholder="Testo domanda o esercizio..." rows="3" style="margin-bottom: 14px;"></textarea>
 
-          <!-- Campo per allegare immagini Domanda (con supporto multi-file) -->
+       <!-- Campo per allegare immagini Domanda -->
 <div style="margin-bottom: 15px;">
     <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Allega immagini Domanda (opzionali):</label>
     <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 10px 16px; background: rgba(15,23,42,0.9); border: 1px solid var(--glass-border); border-radius: 12px; color: var(--text-main);">
@@ -199,13 +199,15 @@
             📷 <span id="file-text-q" style="opacity: 0.85; font-size: 0.9rem;">Scegli immagini...</span>
             <input type="file" id="add-image" accept="image/png, image/jpeg, image/webp" multiple style="display: none;" onchange="handleImageSelection(this, 'q')">
         </label>
-        <button type="button" id="file-remove-q" onclick="removeImage('q')" style="display: none; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; cursor: pointer; font-size: 0.8rem; padding: 6px 10px; border-radius: 8px; transition: all 0.2s;" title="Rimuovi immagini">✕ Rimuovi</button>
+        <button type="button" onclick="clearAllImages('q')" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; cursor: pointer; font-size: 0.8rem; padding: 6px 10px; border-radius: 8px;" title="Rimuovi tutte">Rimuovi tutte</button>
     </div>
+    <!-- Contenitore Anteprime Domanda -->
+    <div id="preview-container-q" style="display: none; gap: 8px; flex-wrap: wrap; margin-top: 10px;"></div>
 </div>
             
             <textarea id="add-a" placeholder="Risposta o Svolgimento completo..." rows="3" style="margin-bottom: 14px;"></textarea>
 
-      <!-- Campo per allegare immagini Risposta / Svolgimento (con supporto multi-file) -->
+     <!-- Campo per allegare immagini Risposta / Svolgimento -->
 <div style="margin-bottom: 15px;">
     <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Allega immagini Risposta / Svolgimento (opzionali):</label>
     <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 10px 16px; background: rgba(15,23,42,0.9); border: 1px solid var(--glass-border); border-radius: 12px; color: var(--text-main);">
@@ -213,8 +215,10 @@
             📷 <span id="file-text-a" style="opacity: 0.85; font-size: 0.9rem;">Scegli immagini...</span>
             <input type="file" id="add-answer-image" accept="image/png, image/jpeg, image/webp" multiple style="display: none;" onchange="handleImageSelection(this, 'a')">
         </label>
-        <button type="button" id="file-remove-a" onclick="removeImage('a')" style="display: none; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; cursor: pointer; font-size: 0.8rem; padding: 6px 10px; border-radius: 8px; transition: all 0.2s;" title="Rimuovi immagini">✕ Rimuovi</button>
+        <button type="button" onclick="clearAllImages('a')" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; cursor: pointer; font-size: 0.8rem; padding: 6px 10px; border-radius: 8px;" title="Rimuovi tutte">Rimuovi tutte</button>
     </div>
+    <!-- Contenitore Anteprime Risposta -->
+    <div id="preview-container-a" style="display: none; gap: 8px; flex-wrap: wrap; margin-top: 10px;"></div>
 </div>
             
             <div id="quiz-fields" style="display: none; margin-bottom: 15px;">
