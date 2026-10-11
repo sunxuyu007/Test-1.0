@@ -444,6 +444,8 @@ function launchSession() {
                         options: item.options, 
                         image: item.image, 
                         answerImage: item.answerImage, 
+                        images: item.images,                 // <-- AGGIUNTO: preserva le immagini multiple domanda
+                        answerImages: item.answerImages,     // <-- AGGIUNTO: preserva le immagini multiple risposta
                         gRef: g 
                     });
                 }
@@ -751,7 +753,13 @@ async function connectToFile() {
 }
 
 async function save() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+    } catch (e) {
+        console.error("Errore salvataggio localStorage:", e);
+        showToast('Memoria del browser quasi piena! Le immagini locali occupano spazio.', 'error');
+    }
+
     if (fileHandle) {
         try {
             const writable = await fileHandle.createWritable();
