@@ -145,20 +145,104 @@ function renderDash() {
 }
 
 function addNewCourse() {
-    const courseName = prompt("Inserisci il nome del nuovo corso (es. Fisica Tecnica):");
-    if (!courseName) return;
-    const trimmed = courseName.trim();
-    if (!trimmed) return;
+   let html = '<div class="modal-overlay" onclick="if(event.target===this)closeModal()">' +
+        '<div class="modal-card">' +
+        '<h3>➕ Aggiungi Nuovo Corso</h3>' +
+        '<p style="color:var(--text-muted); font-size:0.88rem; margin-bottom:16px;">Inserisci il nome della materia da studiare</p>' +
+        '<input type="text" id="modal-new-course-name" placeholder="Es. Fisica Tecnica..." style="width:100%; padding:12px; border-radius:10px; background:rgba(15,23,42,0.9); border:1px solid var(--glass-border); color:var(--text); margin-bottom:20px; outline:none;">' +
+        '<div style="display:flex; gap:10px;">' +
+        '<button class="btn" onclick="confirmAddCourse()" style="flex:1; padding:12px;">Crea Corso</button>' +
+        '<button class="btn btn-back" onclick="closeModal()">Annulla</button></div>' +
+        '</div></div>';
     
-    if (db[trimmed]) {
+    const modalRoot = document.getElementById('modal-root');
+    if (modalRoot) modalRoot.innerHTML = html;
+    
+    setTimeout(() => {
+        const input = document.getElementById('modal-new-course-name');
+        if (input) {
+            input.focus();
+            input.onkeydown = (e) => { if (e.key === 'Enter') confirmAddCourse(); };
+        }
+    }, 50);
+}
+
+function confirmAddCourse() {
+    const input = document.getElementById('modal-new-course-name');
+    if (!input) return;
+    const courseName = input.value.trim();
+    if (!courseName) {
+        showToast('Inserisci un nome valido per il corso', 'error');
+        return;
+    }
+    if (db[courseName]) {
         showToast('Questo corso esiste già!', 'error');
         return;
     }
     
-    db[trimmed] = { groups: {} };
+    db[courseName] = { groups: {} };
     save();
     renderDash();
+    closeModal();
     showToast('Corso aggiunto con successo!', 'success');
+}
+
+// ===== MODIFICA NOME CORSO (MODALE PERSONALIZZATA) =====
+function editCourse(oldName) {
+    let html = '<div class="modal-overlay" onclick="if(event.target===this)closeModal()">' +
+        '<div class="modal-card">' +
+        '<h3>✏️ Modifica Nome Corso</h3>' +
+        '<p style="color:var(--text-muted); font-size:0.88rem; margin-bottom:16px;">Modifica il nome del corso "' + oldName + '"</p>' +
+        '<input type="text" id="modal-edit-course-name" value="' + oldName.replace(/"/g, '&quot;') + '" style="width:100%; padding:12px; border-radius:10px; background:rgba(15,23,42,0.9); border:1px solid var(--glass-border); color:var(--text); margin-bottom:20px; outline:none;">' +
+        '<div style="display:flex; gap:10px;">' +
+        '<button class="btn" onclick="confirmEditCourse(\'' + oldName.replace(/'/g, "\\'").replace(/"/g, '&quot;') + '\')" style="flex:1; padding:12px;">Salva Modifiche</button>' +
+        '<button class="btn btn-back" onclick="closeModal()">Annulla</button></div>' +
+        '</div></div>';
+    
+    const modalRoot = document.getElementById('modal-root');
+    if (modalRoot) modalRoot.innerHTML = html;
+    
+    setTimeout(() => {
+        const input = document.getElementById('modal-edit-course-name');
+        if (input) {
+            input.focus();
+            input.select();
+            input.onkeydown = (e) => { if (e.key === 'Enter') confirmEditCourse(oldName); };
+        }
+    }, 50);
+}
+
+function confirmEditCourse(oldName) {
+    const input = document.getElementById('modal-edit-course-name');
+    if (!input) return;
+    const newName = input.value.trim();
+    if (!newName || newName === oldName) {
+        closeModal();
+        return;
+    }
+    if (db[newName]) {
+        showToast('Esiste già un corso con questo nome!', 'error');
+        return;
+    }
+
+    db[newName] = db[oldName];
+    delete db[oldName];
+
+    const types = ['flashcard', 'quiz', 'esercizio'];
+    types.forEach(function(type) {
+        const oldKey = oldName + '_' + type;
+        const newKey = newName + '_' + type;
+        if (scores[oldKey]) {
+            scores[newKey] = scores[oldKey];
+            delete scores[oldKey];
+        }
+    });
+    localStorage.setItem(SCORES_KEY, JSON.stringify(scores));
+
+    save();
+    renderDash();
+    closeModal();
+    showToast('Nome del corso modificato con successo!', 'success');
 }
 
 function deleteCourse(courseName) {
@@ -1345,3 +1429,5 @@ function editCourse(oldName) {
     renderDash();
     showToast('Nome del corso modificato con successo!', 'success');
 }
+
+
