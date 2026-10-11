@@ -152,11 +152,17 @@
     <div id="view-manager" class="view">
         <button class="btn btn-back" onclick="showView('view-subject-menu')">&#8592; Indietro</button>
         <div class="panel" style="margin-top:20px;">
-            <h4>🔗 Sync File Locale</h4>
+    <h4>🔗 Sync File Locale</h4>
+    
+    <!-- Contenitore Flex per allineare gli elementi a sinistra e il backup a destra -->
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-top: 12px;">
+        <div>
             <button class="btn" onclick="connectToFile()">Connetti database.json</button>
             <div id="sync-info" style="font-size:0.82rem; margin-top:8px; color:var(--text-muted);">Stato: Browser Storage</div>
-            <button class="btn btn-ghost" onclick="downloadDatabase()">📥 Scarica Database (Backup)</button>
         </div>
+        <button class="btn btn-ghost" onclick="downloadDatabase()">📥 Scarica Database (Backup)</button>
+    </div>
+</div>
         <div class="panel">
             <h4>&#10133; Aggiungi Manualmente</h4>
             <select id="add-type">
