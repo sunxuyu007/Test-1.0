@@ -882,6 +882,17 @@ function finishAddManual(item, gName) {
     if (document.getElementById('add-a')) document.getElementById('add-a').value = '';
     if (document.getElementById('add-image')) document.getElementById('add-image').value = '';
     if (document.getElementById('add-answer-image')) document.getElementById('add-answer-image').value = '';
+
+
+const textQ = document.getElementById('file-text-q');
+const removeQ = document.getElementById('file-remove-q');
+if (textQ) textQ.innerText = 'Scegli immagine...';
+if (removeQ) removeQ.style.display = 'none';
+
+const textA = document.getElementById('file-text-a');
+const removeA = document.getElementById('file-remove-a');
+if (textA) textA.innerText = 'Scegli immagine...';
+if (removeA) removeA.style.display = 'none';
 }
 
 function doImport() {
@@ -1436,4 +1447,36 @@ function editCourse(oldName) {
     showToast('Nome del corso modificato con successo!', 'success');
 }
 
+// ===== GESTIONE FEEDBACK E RIMOZIONE IMMAGINI MANUALI =====
+function handleImageSelection(input, type) {
+    const textEl = document.getElementById('file-text-' + type);
+    const removeBtn = document.getElementById('file-remove-' + type);
+    
+    if (input.files && input.files[0]) {
+        if (textEl) {
+            textEl.innerHTML = '<strong style="color:var(--success);">' + input.files[0].name + '</strong>';
+        }
+        if (removeBtn) {
+            removeBtn.style.display = 'inline-block';
+        }
+    }
+}
 
+function removeImage(type) {
+    const inputId = type === 'q' ? 'add-image' : 'add-answer-image';
+    const input = document.getElementById(inputId);
+    if (input) {
+        input.value = ''; // Pulisce il file input
+    }
+    
+    const textEl = document.getElementById('file-text-' + type);
+    const removeBtn = document.getElementById('file-remove-' + type);
+    
+    if (textEl) {
+        textEl.innerText = 'Scegli immagine...';
+    }
+    if (removeBtn) {
+        removeBtn.style.display = 'none';
+    }
+    showToast('Immagine rimossa', 'info');
+}
