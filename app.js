@@ -75,9 +75,21 @@ let randomizeOrder = true;
 let quizAutoAdvance = null;
 
 // ===== LOGIN =====
-function handleLogin() {
+async function handleLogin() {
     const passEl = document.getElementById('pass');
-    if (passEl.value === "1234") {
+    const password = passEl.value;
+    
+    // Calcola l'hash SHA-256 della password inserita dall'utente
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    
+    // Questo è l'hash SHA-256 corrispondente alla password "一二三四"
+    const correctHash = "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4";
+
+    if (hashHex === correctHash) {
         const overlay = document.getElementById('login-overlay');
         overlay.style.transition = 'opacity 0.5s ease, filter 0.5s ease';
         overlay.style.opacity = '0';
