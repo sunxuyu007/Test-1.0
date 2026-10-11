@@ -71,11 +71,11 @@
                 <h3>Esercizi</h3>
                 <p>Problemi completi con svolgimenti dettagliati</p>
             </div>
-            <div class="card" onclick="initSearchFilters(); showView('view-browse')">
-               <div class="card-icon" style="width:40px; height:40px; font-size:1.2rem; margin-bottom:8px;">📁</div>
-    <h3 style="font-size:1.1rem;">Esplora Gruppi</h3>
-    <p>Filtra per categoria, sottogruppo o cerca parole chiave</p>
-            </div>
+           <div class="card" onclick="initSearchFilters(); showView('view-browse')">
+    <div class="card-icon icon-browse">📂</div>
+    <h3>Esplora Gruppi</h3>
+    <p>Sfoglia, gestisci e cancella domande per argomento</p>
+</div>
             <!-- Card Statistiche -->
 <div class="card" onclick="openStatsView()">
     <div class="card-icon" style="width:40px; height:40px; font-size:1.2rem; margin-bottom:8px;">📊</div>
@@ -92,33 +92,33 @@
     <!-- GROUP BROWSER -->
     <div id="view-browse" class="view">
         <button class="btn btn-back" onclick="showView('view-subject-menu')">&#8592; Indietro</button>
-    <h2 style="margin-top:20px;">📁 Esplora Gruppi e Ricerca</h2>
-    <p style="color:var(--text-muted); margin-bottom:20px; font-size:0.9rem;">Cerca parole chiave, filtra per categoria o naviga tra i sottogruppi</p>
+        <h2 style="margin-top:20px;">📂 Esplora Gruppi e Ricerca</h2>
+        <p style="color:var(--text-muted); margin-bottom:20px; font-size:0.9rem;">Cerca parole chiave nelle domande, filtra per categoria o naviga tra i gruppi</p>
 
-    <!-- ===== SEZIONE RICERCA E FILTRI AVANZATI ===== -->
-    <div class="exercise-card" style="margin-bottom: 20px; padding: 15px;">
-        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <!-- Input di ricerca testuale -->
-            <input type="text" id="search-input" placeholder="Cerca una parola chiave (es. 'come si chiama')..." 
-                   oninput="filterQuestions()" style="flex: 1; min-width: 200px; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: var(--text-main);">
-            
-            <!-- Filtro per Categoria/Tipo -->
-            <select id="filter-type" onchange="filterQuestions()" style="padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: var(--text-main);">
-                <option value="all">Tutte le categorie</option>
-                <option value="flashcard">🎴 Flashcards</option>
-                <option value="quiz">📝 Quiz</option>
-                <option value="esercizio">✍️ Esercizi</option>
-            </select>
-            
-            <!-- Filtro per Sottogruppo -->
-            <select id="filter-group" onchange="filterQuestions()" style="padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: var(--text-main);">
-                <option value="all">Tutti i sottogruppi</option>
-            </select>
+        <!-- Barra di Ricerca e Filtri -->
+        <div class="exercise-card" style="margin-bottom: 20px; padding: 15px;">
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <!-- Input ricerca testuale -->
+                <input type="text" id="search-input" placeholder="Cerca parola chiave nella domanda (es. 'come si chiama')..." 
+                       oninput="filterQuestions()" style="flex: 1; min-width: 200px; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: var(--text-main);">
+                
+                <!-- Filtro per Categoria -->
+                <select id="filter-type" onchange="filterQuestions()" style="padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: white;">
+                    <option value="all">Tutte le categorie</option>
+                    <option value="flashcard">🎴 Flashcards</option>
+                    <option value="quiz">📝 Quiz</option>
+                    <option value="esercizio">✍️ Esercizi</option>
+                </select>
+                
+                <!-- Filtro per Sottogruppo -->
+                <select id="filter-group" onchange="filterQuestions()" style="padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: white;">
+                    <option value="all">Tutti i sottogruppi</option>
+                </select>
+            </div>
         </div>
-    </div>
 
-    <!-- Contenitore dei risultati filtrati (manteniamo il tuo id 'browse-content') -->
-    <div id="browse-content" style="max-width:700px; margin:0 auto; text-align:left;"></div>
+        <!-- Contenitore dinamico -->
+        <div id="browse-content" style="max-width:700px; margin:0 auto; text-align:left;"></div>
     </div>
 
     <!-- STUDY VIEW -->
