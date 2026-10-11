@@ -1185,3 +1185,28 @@ function openStatsView() {
     container.innerHTML = html;
     showView('view-stats');
 }
+
+// ===== SCARICA DATABASE (Funziona su PC e Mobile) =====
+function downloadDatabase() {
+    try {
+        const dataStr = JSON.stringify(db, null, 2);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.href = url;
+        downloadAnchor.download = 'database.json';
+        
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        
+        // Pulizia
+        document.body.removeChild(downloadAnchor);
+        URL.revokeObjectURL(url);
+        
+        showToast('Backup scaricato con successo!', 'success');
+    } catch (e) {
+        console.error("Errore durante il download del file:", e);
+        showToast('Errore durante il download del file', 'error');
+    }
+}
