@@ -857,24 +857,83 @@ renderImagePreviews('a');
 }
 
 function doImport() {
-    try {
+   try {
         const importArea = document.getElementById('import-area');
         const raw = importArea ? importArea.value.trim() : "";
-        if (!raw) { showToast('Incolla dei dati JSON prima di importare', 'error'); return; }
+        if (!raw) { 
+            showToast('Incolla dei dati JSON prima di importare', 'error'); 
+            return; 
+        }
+        
         const data = JSON.parse(raw);
         let count = 0;
-        data.forEach(function(i) {
-            const groupName = i.group || "Generale";
-            if (!db[currentS]) db[currentS] = { groups: {} };
-            if (!db[currentS].groups[groupName]) db[currentS].groups[groupName] = [];
-            db[currentS].groups[groupName].push(i);
-            count++;
-        });
+
+        // Caso 1: Array di elementi in cui ciascuno specifica "course" e "group"
+        if (Array.isArray(data)) {
+            data.forEach(function(item) {
+                // Se l'elemento specifica un corso usa quello, altrimenti usa il corso corrente o "Generale"
+                const courseName = (item.course && item.course.trim()) ? item.course.trim() : (currentS || "Generale");
+                const groupName = (item.group && item.group.trim()) ? item.group.trim() : "Generale";
+
+                if (!db[courseName]) {
+                    db[courseName] = { groups: {} };
+                }
+                if (!db[courseName].groups) {
+                    db[courseName].groups = {};
+                }
+                if (!db[courseName].groups[groupName]) {
+                    db[courseName].groups[groupName] = [];
+                }
+
+                // Pulizia delle proprietà di servizio prima del salvataggio
+                let cleanItem = { ...item };
+                delete cleanItem.course;
+                delete cleanItem.group;
+                if (cleanItem.enabled === undefined) cleanItem.enabled = true;
+
+                db[courseName].groups[groupName].push(cleanItem);
+                count++;
+            });
+        } 
+        // Caso 2: Struttura a oggetto per corsi (es. { "Analisi 2": { groups: { ... } } })
+        else if (typeof data === 'object' && data !== null) {
+            for (let courseName in data) {
+                if (!db[courseName]) {
+                    db[courseName] = { groups: {} };
+                }
+                if (!db[courseName].groups) db[courseName].groups = {};
+
+                const groups = data[courseName].groups || data[courseName];
+                for (let groupName in groups) {
+                    if (!db[courseName].groups[groupName]) {
+                        db[courseName].groups[groupName] = [];
+                    }
+                    const itemsArr = groups[groupName];
+                    if (Array.isArray(itemsArr)) {
+                        itemsArr.forEach(function(item) {
+                            db[courseName].groups[groupName].push(item);
+                            count++;
+                        });
+                    }
+                }
+            }
+        }
+
         save();
-        showToast(count + ' elementi importati!', 'success');
+        renderDash();
+        showToast(count + ' elementi importati e smistati con successo!', 'success');
         if (importArea) importArea.value = '';
-        openSub(currentS);
-    } catch (e) { showToast('Errore nel formato JSON', 'error'); }
+        
+        // Torna alla dashboard o aggiorna la vista del corso corrente
+        if (currentS && db[currentS]) {
+            openSub(currentS);
+        } else {
+            showView('view-main');
+        }
+    } catch (e) {
+        console.error(e);
+        showToast('Errore nel formato JSON. Controlla la sintassi.', 'error');
+    }
 }
 
 const addTypeSelect = document.getElementById('add-type');
