@@ -524,6 +524,7 @@ function updateProgress() {
 
 // ===== RENDER ITEM OTTIMIZZATO =====
 // ===== RENDER ITEM =====
+// ===== RENDER ITEM OTTIMIZZATO =====
 function renderItem() {
     const container = document.getElementById('study-content');
     if (!container) return;
@@ -531,8 +532,15 @@ function renderItem() {
     const item = currentList[currentIdx];
     updateProgress();
     
-    // Genera il blocco immagine solo se item.image esiste ed è valorizzato
-   let ansImgHtml = '';
+    // Dichiarazione esatta ed esplicita di entrambe le variabili immagine
+    let imgHtml = '';
+    if (item.image) {
+        imgHtml = '<div style="margin: 15px 0; text-align: center; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 12px; border: 1px solid var(--glass-border);">' +
+                  '<img src="' + item.image + '" style="max-width: 100%; max-height: 320px; border-radius: 8px; object-fit: contain; display: block; margin: 0 auto;" alt="Immagine Domanda">' +
+                  '</div>';
+    }
+
+    let ansImgHtml = '';
     if (item.answerImage) {
         ansImgHtml = '<div style="margin: 15px 0; text-align: center; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 12px; border: 1px solid var(--glass-border);">' +
                      '<img src="' + item.answerImage + '" style="max-width: 100%; max-height: 320px; border-radius: 8px; object-fit: contain; display: block; margin: 0 auto;" alt="Immagine Risposta">' +
@@ -546,16 +554,17 @@ function renderItem() {
             '<div class="flip-front">' +
             '<span class="badge">' + item.gRef + '</span>' +
             imgHtml +
-            (item.q ? '<div style="font-size:1.25rem; line-height:1.6; font-weight:500; margin-top:10px;">' + item.q + '</div>' : '') +
+            (item.q ? '<div style="font-size:1.25rem; line-height:1.6; font-weight:500;">' + item.q + '</div>' : '') +
             '<span class="flip-hint">🔄 Clicca per girare</span></div>' +
             '<div class="flip-back">' +
             '<span class="badge" style="background:linear-gradient(135deg, var(--success), var(--accent));">RISPOSTA</span>' +
+            ansImgHtml +
             '<div style="line-height:1.7; font-size:1.05rem;">' + renderMedia(item.a) + '</div>' +
             '<span class="flip-hint">🔄 Clicca per tornare</span></div>' +
             '</div></div>';
 
     } else if (currentA === 'esercizio') {
-       container.innerHTML =
+        container.innerHTML =
             '<div class="exercise-card">' +
             '<span class="badge">' + item.gRef + '</span>' +
             '<h3 style="font-size:1.2rem; margin:10px 0;">Esercizio</h3>' +
@@ -566,6 +575,7 @@ function renderItem() {
             '</div>';
 
     } else {
+        // Blocco Quiz
         let opts = [];
         if (item.options) {
             for (let i = 0; i < item.options.length; i++) {
