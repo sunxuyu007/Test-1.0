@@ -532,11 +532,11 @@ function renderItem() {
     updateProgress();
     
     // Genera il blocco immagine solo se item.image esiste ed è valorizzato
-    let imgHtml = '';
-    if (item.image) {
-        imgHtml = '<div style="margin: 15px 0; text-align: center; background: rgba(0,0,0,0.4); padding: 12px; border-radius: 14px; border: 1px solid var(--glass-border);">' +
-                  '<img src="' + item.image + '" style="max-width: 100%; max-height: 350px; border-radius: 10px; object-fit: contain; display: block; margin: 0 auto;" alt="Immagine">' +
-                  '</div>';
+   let ansImgHtml = '';
+    if (item.answerImage) {
+        ansImgHtml = '<div style="margin: 15px 0; text-align: center; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 12px; border: 1px solid var(--glass-border);">' +
+                     '<img src="' + item.answerImage + '" style="max-width: 100%; max-height: 320px; border-radius: 8px; object-fit: contain; display: block; margin: 0 auto;" alt="Immagine Risposta">' +
+                     '</div>';
     }
 
     if (currentA === 'flashcard') {
@@ -555,14 +555,15 @@ function renderItem() {
             '</div></div>';
 
     } else if (currentA === 'esercizio') {
-        container.innerHTML =
+       container.innerHTML =
             '<div class="exercise-card">' +
             '<span class="badge">' + item.gRef + '</span>' +
             '<h3 style="font-size:1.2rem; margin:10px 0;">Esercizio</h3>' +
             imgHtml +
             (item.q ? '<p style="font-size:1.05rem; margin-bottom:24px; line-height:1.7; color:var(--text-main);">' + item.q + '</p>' : '') +
             '<button class="btn btn-success" onclick="revealSolution(this)">Mostra Svolgimento</button>' +
-            '<div id="sol" class="solution-box">' + renderMedia(item.a) + '</div></div>';
+            '<div id="sol" class="solution-box">' + ansImgHtml + renderMedia(item.a) + '</div>' +
+            '</div>';
 
     } else {
         let opts = [];
@@ -759,8 +760,8 @@ function addManual() {
     
     let item = { type: type, q: q, enabled: true };
 
-    // Funzione di supporto per comprimere e convertire qualsiasi immagine in Base64
-    function processImageFile(file, callback) {
+    // Funzione interna per comprimere l'immagine in Base64 tramite Canvas
+    function compressAndConvert(file, callback) {
         const reader = new FileReader();
         reader.onload = function(e) {
             const img = new Image();
@@ -790,12 +791,12 @@ function addManual() {
         reader.readAsDataURL(file);
     }
 
-    // Gestione concatenata del caricamento delle due immagini
+    // Gestione concatenata sicura di entrambe le immagini
     if (hasImage) {
-        processImageFile(imageInput.files[0], function(base64Q) {
+        compressAndConvert(imageInput.files[0], function(base64Q) {
             item.image = base64Q;
             if (hasAnsImage) {
-                processImageFile(ansImageInput.files[0], function(base64A) {
+                compressAndConvert(ansImageInput.files[0], function(base64A) {
                     item.answerImage = base64A;
                     finishAddManual(item, gName);
                 });
@@ -804,7 +805,7 @@ function addManual() {
             }
         });
     } else if (hasAnsImage) {
-        processImageFile(ansImageInput.files[0], function(base64A) {
+        compressAndConvert(ansImageInput.files[0], function(base64A) {
             item.answerImage = base64A;
             finishAddManual(item, gName);
         });
