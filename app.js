@@ -777,29 +777,21 @@ function addManual() {
     const qInput = document.getElementById('add-q').value;
     const q = qInput ? qInput.trim() : "";
     
-    const imageInput = document.getElementById('add-image');
-    const ansImageInput = document.getElementById('add-answer-image');
-    
-    const hasImages = imageInput && imageInput.files && imageInput.files.length > 0;
-    
-    if (!q && !hasImages) {
+    if (!q && tempImagesQ.length === 0) {
         showToast('Inserisci il testo della domanda o allega almeno un\'immagine', 'error');
         return;
     }
     
     let item = { type: type, q: q, enabled: true };
 
-    processFiles(imageInput.files, function(base64ImagesQ) {
-        if (base64ImagesQ.length > 0) {
-            item.images = base64ImagesQ; // Salva l'array di immagini
-        }
-        processFiles(ansImageInput.files, function(base64ImagesA) {
-            if (base64ImagesA.length > 0) {
-                item.answerImages = base64ImagesA; // Salva l'array di immagini risposta
-            }
-            finishAddManual(item, gName);
-        });
-    });
+    if (tempImagesQ.length > 0) {
+        item.images = [...tempImagesQ]; // Salva l'array ordinato delle immagini domanda
+    }
+    if (tempImagesA.length > 0) {
+        item.answerImages = [...tempImagesA]; // Salva l'array ordinato delle immagini risposta
+    }
+
+    finishAddManual(item, gName);
 }
 
 function finishAddManual(item, gName) {
@@ -853,6 +845,11 @@ const textA = document.getElementById('file-text-a');
 const removeA = document.getElementById('file-remove-a');
 if (textA) textA.innerText = 'Scegli immagine...';
 if (removeA) removeA.style.display = 'none';
+
+    tempImagesQ = [];
+tempImagesA = [];
+renderImagePreviews('q');
+renderImagePreviews('a');
 }
 
 function doImport() {
@@ -1407,20 +1404,109 @@ function editCourse(oldName) {
     showToast('Nome del corso modificato con successo!', 'success');
 }
 
+// ===== STATO TEMPORANEO IMMAGINI MANUALI =====
+let tempImagesQ = []; 
+let tempImagesA = [];
+
 // ===== GESTIONE FEEDBACK E RIMOZIONE IMMAGINI MANUALI =====
 function handleImageSelection(input, type) {
-    const textEl = document.getElementById('file-text-' + type);
-    const removeBtn = document.getElementById('file-remove-' + type);
+    if (!input.files || input.files.length === 0) return;
+    const targetArray = type === 'q' ? tempImagesQ : tempImagesA;
     
-    if (input.files && input.files.length > 0) {
-        const count = input.files.length;
-        if (textEl) {
-            textEl.innerHTML = '<strong style="color:var(--success);">' + count + ' ' + (count === 1 ? 'immagine selezionata' : 'immagini selezionate') + '</strong>';
-        }
-        if (removeBtn) {
-            removeBtn.style.display = 'inline-block';
-        }
+    Array.from(input.files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            // Comprimiamo l'immagine prima di salvarla nell'anteprima temporanea
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                const maxDim = 800;
+                
+                if (width > height && width > maxDim) {
+                    height *= maxDim / width;
+                    width = maxDim;
+                } else if (height > maxDim) {
+                    width *= maxDim / height;
+                    height = maxDim;
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                targetArray.push(canvas.toDataURL('image/jpeg', 0.8));
+                renderImagePreviews(type);
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+    input.value = ''; // Pulisce l'input per permettere di riselezionare gli stessi file se necessario
+}
+
+function renderImagePreviews(type) {
+    const containerId = type === 'q' ? 'preview-container-q' : 'preview-container-a';
+    const textId = type === 'q' ? 'file-text-q' : 'file-text-a';
+    const container = document.getElementById(containerId);
+    const textEl = document.getElementById(textId);
+    const targetArray = type === 'q' ? tempImagesQ : tempImagesA;
+
+    if (textEl) {
+        const count = targetArray.length;
+        textEl.innerHTML = count > 0 ? '<strong style="color:var(--success);">' + count + ' ' + (count === 1 ? 'immagine selezionata' : 'immagini selezionate') + '</strong>' : 'Scegli immagini...';
     }
+
+    if (!container) return;
+    if (targetArray.length === 0) {
+        container.innerHTML = '';
+        container.style.display = 'none';
+        return;
+    }
+    container.style.display = 'flex';
+
+    let html = '';
+    targetArray.forEach((src, idx) => {
+        html += '<div style="position: relative; width: 90px; height: 90px; border-radius: 10px; border: 1px solid var(--glass-border); overflow: hidden; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center;">' +
+                '<img src="' + src + '" style="width: 100%; height: 100%; object-fit: cover;">' +
+                // Tasto rimuovi singola immagine
+                '<button type="button" onclick="removeSingleImage(\'' + type + '\', ' + idx + ')" style="position: absolute; top: 4px; right: 4px; background: rgba(239, 68, 68, 0.9); color: white; border: none; border-radius: 50%; width: 22px; height: 22px; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.3);" title="Rimuovi">✕</button>' +
+                // Barra inferiore per cambiare l'ordine (sposta sinistra / destra)
+                '<div style="position: absolute; bottom: 2px; left: 2px; right: 2px; display: flex; justify-content: space-between; background: rgba(15,23,42,0.85); border-radius: 6px; padding: 2px 4px; align-items: center;">' +
+                (idx > 0 ? '<button type="button" onclick="moveImage(\'' + type + '\', ' + idx + ', -1)" style="background:none; border:none; color:white; font-size:11px; cursor:pointer;" title="Sposta a sinistra">◀</button>' : '<span></span>') +
+                '<span style="font-size:9px; color:var(--text-muted); font-weight:bold;">' + (idx + 1) + '</span>' +
+                (idx < targetArray.length - 1 ? '<button type="button" onclick="moveImage(\'' + type + '\', ' + idx + ', 1)" style="background:none; border:none; color:white; font-size:11px; cursor:pointer;" title="Sposta a destra">▶</button>' : '<span></span>') +
+                '</div>' +
+                '</div>';
+    });
+    container.innerHTML = html;
+}
+
+// Rimuove una singola immagine dall'array in base all'indice
+function removeSingleImage(type, idx) {
+    if (type === 'q') tempImagesQ.splice(idx, 1);
+    else tempImagesA.splice(idx, 1);
+    renderImagePreviews(type);
+}
+
+// Sposta l'immagine a destra o sinistra per cambiare l'ordine
+function moveImage(type, idx, direction) {
+    const targetArray = type === 'q' ? tempImagesQ : tempImagesA;
+    const newIdx = idx + direction;
+    if (newIdx < 0 || newIdx >= targetArray.length) return;
+    const item = targetArray.splice(idx, 1)[0];
+    targetArray.splice(newIdx, 0, item);
+    renderImagePreviews(type);
+}
+
+// Rimuove tutte le immagini del gruppo
+function clearAllImages(type) {
+    if (type === 'q') tempImagesQ = [];
+    else tempImagesA = [];
+    renderImagePreviews(type);
+    showToast('Tutte le immagini rimosse', 'info');
 }
 
 function removeImage(type) {
