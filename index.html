@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UniFlash v1.01 - Sistema Omnia (Beta) </title>
+    <title>UniFlash v1.01 - Sistema Omnia (Beta)</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <!-- Favicon con Emoji (supportata da tutti i browser moderni) -->
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎓</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎓</text></svg>">
 </head>
 <body>
 
@@ -37,8 +36,6 @@
         <h1 style="margin-bottom:6px;">UniFlash <span class="gradient-text">v1.01</span></h1>
         <p style="color:var(--text-muted); margin-bottom:10px; font-size:0.95rem;">Il tuo hub di studio intelligente</p>
         <div class="grid" id="main-grid"></div>
-
-        
     </div>
 
     <!-- SUBJECT MENU -->
@@ -71,17 +68,16 @@
                 <h3>Esercizi</h3>
                 <p>Problemi completi con svolgimenti dettagliati</p>
             </div>
-           <div class="card" onclick="initSearchFilters(); showView('view-browse')">
-    <div class="card-icon icon-browse">📂</div>
-    <h3>Esplora Gruppi</h3>
-    <p>Sfoglia, gestisci e cancella domande per argomento</p>
-</div>
-            <!-- Card Statistiche -->
-<div class="card" onclick="openStatsView()">
-    <div class="card-icon" style="width:40px; height:40px; font-size:1.2rem; margin-bottom:8px;">📊</div>
-    <h3 style="font-size:1.1rem;">Statistiche</h3>
-    <p>Visualizza tempi medi ed errori</p>
-</div>
+            <div class="card" onclick="initSearchFilters(); showView('view-browse')">
+                <div class="card-icon icon-browse">📂</div>
+                <h3>Esplora Gruppi</h3>
+                <p>Sfoglia, gestisci, modifica e cancella domande per argomento</p>
+            </div>
+            <div class="card" onclick="openStatsView()">
+                <div class="card-icon" style="width:40px; height:40px; font-size:1.2rem; margin-bottom:8px;">📊</div>
+                <h3 style="font-size:1.1rem;">Statistiche</h3>
+                <p>Visualizza tempi medi ed errori</p>
+            </div>
             <div class="card" onclick="openManager()" style="grid-column: 1 / -1; padding:18px;">
                 <div class="card-icon icon-settings" style="width:40px; height:40px; font-size:1.2rem; margin-bottom:8px;">⚙️</div>
                 <span style="font-weight:600;">Gestione Avanzata & Editor</span>
@@ -89,20 +85,18 @@
         </div>
     </div>
 
-   <!-- GROUP BROWSER -->
+    <!-- GROUP BROWSER -->
     <div id="view-browse" class="view">
         <button class="btn btn-back" onclick="showView('view-subject-menu')">&#8592; Indietro</button>
         <h2 style="margin-top:20px;">📂 Esplora Gruppi e Ricerca</h2>
-        <p style="color:var(--text-muted); margin-bottom:20px; font-size:0.9rem;">Cerca parole chiave nelle domande, filtra per categoria o naviga tra i gruppi</p>
+        <p style="color:var(--text-muted); margin-bottom:20px; font-size:0.9rem;">Cerca parole chiave, filtra per categoria, modifica o elimina elementi</p>
 
         <!-- Barra di Ricerca e Filtri -->
         <div class="exercise-card" style="margin-bottom: 20px; padding: 15px;">
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <!-- Input ricerca testuale -->
-                <input type="text" id="search-input" placeholder="Cerca parola chiave nella domanda (es. 'come si chiama')..." 
+                <input type="text" id="search-input" placeholder="Cerca parola chiave nella domanda..." 
                        oninput="filterQuestions()" style="flex: 1; min-width: 200px; padding: 10px; border-radius: 8px; background: rgba(15,23,42,0.9); border: 1px solid var(--glass-border); color: var(--text);">
                 
-                <!-- Filtro per Categoria -->
                 <select id="filter-type" onchange="filterQuestions()" style="padding: 10px; border-radius: 8px; background: rgba(15,23,42,0.9); border: 1px solid var(--glass-border); color: var(--text);">
                     <option value="all" style="background: #0f172a; color: #fff;">Tutte le categorie</option>
                     <option value="flashcard" style="background: #0f172a; color: #fff;">🎴 Flashcards</option>
@@ -110,14 +104,12 @@
                     <option value="esercizio" style="background: #0f172a; color: #fff;">✍️ Esercizi</option>
                 </select>
                 
-                <!-- Filtro per Sottogruppo -->
                 <select id="filter-group" onchange="filterQuestions()" style="padding: 10px; border-radius: 8px; background: rgba(15,23,42,0.9); border: 1px solid var(--glass-border); color: var(--text);">
                     <option value="all" style="background: #0f172a; color: #fff;">Tutti i sottogruppi</option>
                 </select>
             </div>
         </div>
 
-        <!-- Contenitore dinamico -->
         <div id="browse-content" style="max-width:700px; margin:0 auto; text-align:left;"></div>
     </div>
 
@@ -147,16 +139,14 @@
         <div id="results-content"></div>
     </div>
 
-    <!-- Vista Statistiche -->
-<div id="view-stats" class="view" style="display:none; padding:20px; max-width:800px; margin:0 auto;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-        <h2>📊 Statistiche Corso</h2>
-        <button class="btn btn-back" onclick="showView('view-subject-menu')">← Indietro</button>
+    <!-- STATS VIEW -->
+    <div id="view-stats" class="view" style="display:none; padding:20px; max-width:800px; margin:0 auto;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h2>📊 Statistiche Corso</h2>
+            <button class="btn btn-back" onclick="showView('view-subject-menu')">← Indietro</button>
+        </div>
+        <div id="stats-content" class="exercise-card"></div>
     </div>
-    <div id="stats-content" class="exercise-card">
-        <!-- Generato dinamicamente -->
-    </div>
-</div>
 
     <!-- MANAGER -->
     <div id="view-manager" class="view">
@@ -182,7 +172,6 @@
             
             <textarea id="add-q" placeholder="Testo domanda o esercizio..." rows="3"></textarea>
 
-              <!-- Campo per allegare un'immagine (visibile per tutti i tipi) -->
             <div style="margin-bottom: 15px;">
                 <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Allega immagine Domanda (opzionale):</label>
                 <input type="file" id="add-image" accept="image/png, image/jpeg, image/webp" style="width:100%; padding:10px; background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:12px; color:var(--text-main); cursor:pointer;">
@@ -190,13 +179,11 @@
             
             <textarea id="add-a" placeholder="Risposta o Svolgimento completo..." rows="3"></textarea>
 
-            <!-- Campo per allegare un'immagine alla RISPOSTA/SVOLGIMENTO -->
             <div style="margin-bottom: 15px;">
                 <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Allega immagine Risposta / Svolgimento (opzionale):</label>
                 <input type="file" id="add-answer-image" accept="image/png, image/jpeg, image/webp" style="width:100%; padding:10px; background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:12px; color:var(--text-main); cursor:pointer;">
             </div>
             
-            <!-- Campi specifici per Quiz -->
             <div id="quiz-fields" style="display: none; margin-bottom: 15px;">
                 <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Opzioni di risposta (spunta la casella se è corretta):</label>
                 <div id="quiz-options-container" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;">
@@ -214,8 +201,6 @@
                 <button type="button" class="btn btn-sm btn-ghost" onclick="addQuizOptionRow()" style="font-size:0.85rem; margin-bottom: 12px;">➕ Aggiungi opzione</button>
             </div>
 
-          
-
             <button class="btn" onclick="addManual()" style="margin-top:8px;">Salva nel Database</button>
         </div>
         <div class="panel">
@@ -224,17 +209,16 @@
             <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">
                 <button class="btn" onclick="doImport()">Importa Dati</button>
                 <button class="btn btn-danger" onclick="clearSubject()">Svuota Materia</button>
-                <!-- Pulsante Importa Database -->
-<label class="btn btn-ghost" style="cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
-    📤 Importa Database (JSON)
-    <input type="file" id="import-file-input" accept=".json" style="display: none;" onchange="importDatabaseFromFile(event)">
-</label>
+                <label class="btn btn-ghost" style="cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
+                    📤 Importa Database (JSON)
+                    <input type="file" id="import-file-input" accept=".json" style="display: none;" onchange="importDatabaseFromFile(event)">
+                </label>
             </div>
         </div>
     </div>
 </div>
 
-<!-- MODAL ROOT -->
+<!-- MODAL ROOT (Indispensabile per le finestre di modifica) -->
 <div id="modal-root"></div>
 
 <script src="app.js"></script>
