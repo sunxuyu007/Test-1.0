@@ -546,15 +546,14 @@ function renderItem() {
             '</div></div>';
 
     } else if (currentA === 'esercizio') {
-        container.innerHTML =
+       container.innerHTML =
             '<div class="exercise-card">' +
             '<span class="badge">' + item.gRef + '</span>' +
             '<h3 style="font-size:1.2rem; margin:10px 0;">Esercizio</h3>' +
-            mediaHtml +
-            (item.image ? '' : '<p style="font-size:1.05rem; margin-bottom:24px; line-height:1.7; color:var(--text-main);">' + item.q + '</p>') +
+            imgHtml +
+            '<p style="font-size:1.05rem; margin-bottom:24px; line-height:1.7; color:var(--text-main);">' + item.q + '</p>' +
             '<button class="btn btn-success" onclick="revealSolution(this)">Mostra Svolgimento</button>' +
             '<div id="sol" class="solution-box">' + renderMedia(item.a) + '</div></div>';
-
     } else {
         let opts = [];
         if (item.options) {
