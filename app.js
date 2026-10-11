@@ -1295,12 +1295,33 @@ function initSearchFilters() {
     filterQuestions();
 }
 
-// ===== MOTORE DI RICERCA E FILTRAGGIO INTEGRATO =====
+// Funzione di supporto per mantenere la vecchia vista a gruppi espandibili quando non si cerca nulla
+function renderClassicGroupsView(container) {
+    if (!db[currentS] || !db[currentS].groups) {
+        container.innerHTML = '<p style="color: var(--text-muted);">Nessun gruppo presente.</p>';
+        return;
+    }
+
+    let html = '';
+    for (let groupName in db[currentS].groups) {
+        const count = db[currentS].groups[groupName].length;
+        html += '<div class="exercise-card" style="margin-bottom: 12px; padding: 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;" onclick="expandGroup(\'' + groupName + '\')">' +
+            '<div>' +
+                '<h3 style="font-size: 1rem; color: var(--text-main); margin-bottom: 4px;">📁 ' + groupName + '</h3>' +
+                '<p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">' + count + ' elementi presenti</p>' +
+            '</div>' +
+            '<span style="color: var(--accent);">▶</span>' +
+        '</div>';
+    }
+    container.innerHTML = html;
+}
+
+// ===== MOTORE DI RICERCA E GESTIONE GRUPPI =====
 function filterQuestions() {
     const searchInput = document.getElementById('search-input');
     const typeSelect = document.getElementById('filter-type');
     const groupSelect = document.getElementById('filter-group');
-    const container = document.getElementById('groups-container');
+    const container = document.getElementById('browse-content');
 
     if (!container || !db[currentS] || !db[currentS].groups) return;
 
@@ -1311,9 +1332,14 @@ function filterQuestions() {
     let html = '';
     let totalFound = 0;
 
-    // Scansiona tutti i gruppi del corso corrente
+    // Se NON c'è alcuna ricerca attiva e nessun filtro specifico, mostriamo la visualizzazione classica a gruppi espandibili
+    if (query === '' && selectedType === 'all' && selectedGroup === 'all') {
+        renderClassicGroupsView(container);
+        return;
+    }
+
+    // Altrimenti, mostriamo i risultati filtrati con indicazione del gruppo
     for (let groupName in db[currentS].groups) {
-        // Se è selezionato un sottogruppo specifico e non corrisponde, salta
         if (selectedGroup !== 'all' && groupName !== selectedGroup) continue;
 
         const items = db[currentS].groups[groupName];
@@ -1323,20 +1349,16 @@ function filterQuestions() {
         let groupItemsCount = 0;
 
         items.forEach(function(item, index) {
-            // Distingue tra Flashcard e Quiz/Esercizio
             const isFlashcard = typeof item.answer === 'string' && !item.options;
             const itemType = isFlashcard ? 'flashcard' : (item.options ? 'quiz' : 'esercizio');
 
-            // Filtro per tipo (categoria)
             if (selectedType !== 'all' && itemType !== selectedType) return;
 
-            // Testi da analizzare per la ricerca libera (es. "come si chiama")
             const questionText = (item.question || '').toLowerCase();
             const explanationText = (item.explanation || '').toLowerCase();
             const answerText = (typeof item.answer === 'string' ? item.answer : '').toLowerCase();
             let optionsText = Array.isArray(item.options) ? item.options.join(' ').toLowerCase() : '';
 
-            // Controllo riscontro ricerca testuale
             const matchesQuery = query === '' || 
                 questionText.includes(query) || 
                 explanationText.includes(query) || 
@@ -1350,10 +1372,10 @@ function filterQuestions() {
                 const badgeIcon = isFlashcard ? '🎴 Flashcard' : (itemType === 'quiz' ? '📝 Quiz' : '✍️ Esercizio');
                 const badgeColor = isFlashcard ? 'var(--accent)' : 'var(--success)';
 
-                groupHtml += '<div class="stat-card-item" style="margin-bottom: 10px; padding: 12px;">' +
+                groupHtml += '<div class="stat-card-item" style="margin-bottom: 10px; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 8px;">' +
                     '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">' +
                         '<span style="font-size: 0.75rem; background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 4px; color: ' + badgeColor + ';">' + badgeIcon + '</span>' +
-                        '<span style="font-size: 0.75rem; color: var(--text-muted);">ID Elemento: #' + index + '</span>' +
+                        '<span style="font-size: 0.75rem; color: var(--text-muted);">📁 Gruppo: <strong>' + groupName + '</strong> (ID: #' + index + ')</span>' +
                     '</div>' +
                     '<div style="font-size: 0.9rem; font-weight: 600; color: var(--text-main); margin-bottom: 4px;">' + (item.question || 'Senza titolo') + '</div>';
 
@@ -1367,10 +1389,9 @@ function filterQuestions() {
             }
         });
 
-        // Mostra il blocco del gruppo solo se contiene elementi che soddisfano la ricerca
         if (groupItemsCount > 0) {
-            html += '<div style="margin-bottom: 24px;">' +
-                '<h3 style="font-size: 1.05rem; color: var(--accent); margin-bottom: 10px; border-bottom: 1px solid var(--glass-border); padding-bottom: 6px;">📁 ' + groupName + '</h3>' +
+            html += '<div style="margin-bottom: 20px;">' +
+                '<h3 style="font-size: 1rem; color: var(--accent); margin-bottom: 8px; border-bottom: 1px solid var(--glass-border); padding-bottom: 4px;">📁 ' + groupName + '</h3>' +
                 groupHtml +
                 '</div>';
         }
@@ -1378,6 +1399,8 @@ function filterQuestions() {
 
     if (totalFound === 0) {
         html = '<p style="text-align: center; color: var(--text-muted); padding: 30px;">Nessun elemento trovato con i criteri di ricerca attuali.</p>';
+    } else {
+        html = '<p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">Trovati <strong>' + totalFound + '</strong> elementi:</p>' + html;
     }
 
     container.innerHTML = html;
