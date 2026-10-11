@@ -1267,17 +1267,23 @@ function importDatabaseFromFile(event) {
     reader.readAsText(file);
 }
 
-// ===== INIZIALIZZA I FILTRI DI RICERCA =====
+// ===== APRI LA VISTA GRUPPI E INIZIALIZZA FILTRI =====
+function openGroupsView() {
+    initSearchFilters();
+    showView('view-groups');
+}
+
+// ===== POPOLA I FILTRI DEI SOTTOGRUPPI =====
 function initSearchFilters() {
     const groupSelect = document.getElementById('filter-group');
     if (!groupSelect) return;
 
-    // Pulisce le opzioni esistenti (mantenendo la prima)
+    // Resetta le opzioni del menu a tendina dei gruppi
     groupSelect.innerHTML = '<option value="all">Tutti i sottogruppi</option>';
 
     if (!db[currentS] || !db[currentS].groups) return;
 
-    // Popola il menu a tendina con i gruppi del corso corrente
+    // Popola dinamicamente con i nomi dei gruppi del corso attivo
     for (let groupName in db[currentS].groups) {
         const option = document.createElement('option');
         option.value = groupName;
@@ -1285,16 +1291,16 @@ function initSearchFilters() {
         groupSelect.appendChild(option);
     }
 
-    // Esegue una ricerca iniziale per mostrare tutto o azzerare
+    // Esegue il rendering iniziale
     filterQuestions();
 }
 
-// ===== MOTORE DI RICERCA E FILTRAGGIO =====
+// ===== MOTORE DI RICERCA E FILTRAGGIO INTEGRATO =====
 function filterQuestions() {
     const searchInput = document.getElementById('search-input');
     const typeSelect = document.getElementById('filter-type');
     const groupSelect = document.getElementById('filter-group');
-    const container = document.getElementById('search-results-container');
+    const container = document.getElementById('groups-container');
 
     if (!container || !db[currentS] || !db[currentS].groups) return;
 
@@ -1305,34 +1311,32 @@ function filterQuestions() {
     let html = '';
     let totalFound = 0;
 
-    // Scansiona tutti i gruppi del corso
+    // Scansiona tutti i gruppi del corso corrente
     for (let groupName in db[currentS].groups) {
-        // Se è attivo un filtro per gruppo e non corrisponde, salta
+        // Se è selezionato un sottogruppo specifico e non corrisponde, salta
         if (selectedGroup !== 'all' && groupName !== selectedGroup) continue;
 
         const items = db[currentS].groups[groupName];
         if (!Array.isArray(items)) continue;
 
+        let groupHtml = '';
+        let groupItemsCount = 0;
+
         items.forEach(function(item, index) {
-            // Determina se è una Flashcard o un Quiz/Esercizio
-            // Le flashcard hanno tipicamente 'answer' come stringa, i quiz/esercizi hanno 'options' e 'answer' numerico
+            // Distingue tra Flashcard e Quiz/Esercizio
             const isFlashcard = typeof item.answer === 'string' && !item.options;
             const itemType = isFlashcard ? 'flashcard' : (item.options ? 'quiz' : 'esercizio');
 
-            // Se è attivo un filtro per tipo e non corrisponde, salta
-            if (selectedType !== 'all' && itemType !== selectedType) continue;
+            // Filtro per tipo (categoria)
+            if (selectedType !== 'all' && itemType !== selectedType) return;
 
-            // Testo da controllare per la ricerca (Domanda, Spiegazione, Opzioni)
+            // Testi da analizzare per la ricerca libera (es. "come si chiama")
             const questionText = (item.question || '').toLowerCase();
             const explanationText = (item.explanation || '').toLowerCase();
             const answerText = (typeof item.answer === 'string' ? item.answer : '').toLowerCase();
-            
-            let optionsText = '';
-            if (Array.isArray(item.options)) {
-                optionsText = item.options.join(' ').toLowerCase();
-            }
+            let optionsText = Array.isArray(item.options) ? item.options.join(' ').toLowerCase() : '';
 
-            // Verifica se la query di ricerca è contenuta in uno dei campi
+            // Controllo riscontro ricerca testuale
             const matchesQuery = query === '' || 
                 questionText.includes(query) || 
                 explanationText.includes(query) || 
@@ -1340,32 +1344,40 @@ function filterQuestions() {
                 optionsText.includes(query);
 
             if (matchesQuery) {
+                groupItemsCount++;
                 totalFound++;
+                
                 const badgeIcon = isFlashcard ? '🎴 Flashcard' : (itemType === 'quiz' ? '📝 Quiz' : '✍️ Esercizio');
                 const badgeColor = isFlashcard ? 'var(--accent)' : 'var(--success)';
 
-                html += '<div class="stat-card-item" style="margin-bottom: 12px; padding: 15px;">' +
-                    '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">' +
-                        '<span style="font-size: 0.8rem; background: rgba(255,255,255,0.08); padding: 3px 8px; border-radius: 6px; color: ' + badgeColor + ';">' + badgeIcon + '</span>' +
-                        '<span style="font-size: 0.8rem; color: var(--text-muted);">📁 Sottogruppo: <strong>' + groupName + '</strong></span>' +
+                groupHtml += '<div class="stat-card-item" style="margin-bottom: 10px; padding: 12px;">' +
+                    '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">' +
+                        '<span style="font-size: 0.75rem; background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 4px; color: ' + badgeColor + ';">' + badgeIcon + '</span>' +
+                        '<span style="font-size: 0.75rem; color: var(--text-muted);">ID Elemento: #' + index + '</span>' +
                     '</div>' +
-                    '<div style="font-size: 0.95rem; font-weight: 600; color: var(--text-main); margin-bottom: 6px;">' + (item.question || 'Senza titolo') + '</div>';
+                    '<div style="font-size: 0.9rem; font-weight: 600; color: var(--text-main); margin-bottom: 4px;">' + (item.question || 'Senza titolo') + '</div>';
 
                 if (isFlashcard) {
-                    html += '<div style="font-size: 0.85rem; color: var(--text-muted);">Risposta: <em>' + item.answer + '</em></div>';
+                    groupHtml += '<div style="font-size: 0.8rem; color: var(--text-muted);">Risposta: <em>' + item.answer + '</em></div>';
                 } else if (item.explanation) {
-                    html += '<div style="font-size: 0.85rem; color: var(--text-muted);">Spiegazione: <em>' + item.explanation + '</em></div>';
+                    groupHtml += '<div style="font-size: 0.8rem; color: var(--text-muted);">Spiegazione: <em>' + item.explanation + '</em></div>';
                 }
 
-                html += '</div>';
+                groupHtml += '</div>';
             }
         });
+
+        // Mostra il blocco del gruppo solo se contiene elementi che soddisfano la ricerca
+        if (groupItemsCount > 0) {
+            html += '<div style="margin-bottom: 24px;">' +
+                '<h3 style="font-size: 1.05rem; color: var(--accent); margin-bottom: 10px; border-bottom: 1px solid var(--glass-border); padding-bottom: 6px;">📁 ' + groupName + '</h3>' +
+                groupHtml +
+                '</div>';
+        }
     }
 
     if (totalFound === 0) {
-        html = '<p style="text-align: center; color: var(--text-muted); padding: 20px;">Nessun risultato trovato per i criteri di ricerca inseriti.</p>';
-    } else {
-        html = '<p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px;">Trovati <strong>' + totalFound + '</strong> elementi:</p>' + html;
+        html = '<p style="text-align: center; color: var(--text-muted); padding: 30px;">Nessun elemento trovato con i criteri di ricerca attuali.</p>';
     }
 
     container.innerHTML = html;
