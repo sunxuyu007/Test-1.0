@@ -1210,3 +1210,59 @@ function downloadDatabase() {
         showToast('Errore durante il download del file', 'error');
     }
 }
+
+// ===== IMPORTA DATABASE DA FILE (PC e Mobile) =====
+function importDatabaseFromFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const content = e.target.result;
+            const parsedData = JSON.parse(content);
+            
+            // Chiediamo all'utente se vuole sostituire o unire i dati
+            const replace = confirm("Vuoi SOVRASCRIVERE completamente il database attuale?\n\n• OK = Sostituisci tutto con il file importato\n• Annulla = Unisci i corsi e i dati con quelli esistenti");
+
+            if (replace) {
+                db = parsedData;
+            } else {
+                // Logica di unione intelligente dei corsi
+                for (let course in parsedData) {
+                    if (!db[course]) {
+                        db[course] = parsedData[course];
+                    } else {
+                        // Unisce i gruppi
+                        if (parsedData[course].groups) {
+                            if (!db[course].groups) db[course].groups = {};
+                            for (let g in parsedData[course].groups) {
+                                db[course].groups[g] = parsedData[course].groups[g];
+                            }
+                        }
+                        // Unisce le statistiche se presenti
+                        if (parsedData[course].stats) {
+                            if (!db[course].stats) db[course].stats = {};
+                            for (let s in parsedData[course].stats) {
+                                db[course].stats[s] = parsedData[course].stats[s];
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Salva sul file fisico (se connesso) e sul localStorage
+            save();
+            renderDash();
+            showToast('Database importato con successo!', 'success');
+            
+        } catch (err) {
+            console.error("Errore nel parsing del file JSON:", err);
+            showToast('Errore: il file JSON non è valido o è corrotto!', 'error');
+        }
+        
+        // Pulisce l'input per permettere di riselezionare lo stesso file se necessario
+        event.target.value = '';
+    };
+    reader.readAsText(file);
+}
