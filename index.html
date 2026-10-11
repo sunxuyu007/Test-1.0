@@ -89,7 +89,7 @@
         </div>
     </div>
 
-    <!-- GROUP BROWSER -->
+   <!-- GROUP BROWSER -->
     <div id="view-browse" class="view">
         <button class="btn btn-back" onclick="showView('view-subject-menu')">&#8592; Indietro</button>
         <h2 style="margin-top:20px;">📂 Esplora Gruppi e Ricerca</h2>
@@ -100,19 +100,19 @@
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                 <!-- Input ricerca testuale -->
                 <input type="text" id="search-input" placeholder="Cerca parola chiave nella domanda (es. 'come si chiama')..." 
-                       oninput="filterQuestions()" style="flex: 1; min-width: 200px; padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: var(--text-main);">
+                       oninput="filterQuestions()" style="flex: 1; min-width: 200px; padding: 10px; border-radius: 8px; background: rgba(15,23,42,0.9); border: 1px solid var(--glass-border); color: var(--text);">
                 
                 <!-- Filtro per Categoria -->
-                <select id="filter-type" onchange="filterQuestions()" style="padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: white;">
-                    <option value="all">Tutte le categorie</option>
-                    <option value="flashcard">🎴 Flashcards</option>
-                    <option value="quiz">📝 Quiz</option>
-                    <option value="esercizio">✍️ Esercizi</option>
+                <select id="filter-type" onchange="filterQuestions()" style="padding: 10px; border-radius: 8px; background: rgba(15,23,42,0.9); border: 1px solid var(--glass-border); color: var(--text);">
+                    <option value="all" style="background: #0f172a; color: #fff;">Tutte le categorie</option>
+                    <option value="flashcard" style="background: #0f172a; color: #fff;">🎴 Flashcards</option>
+                    <option value="quiz" style="background: #0f172a; color: #fff;">📝 Quiz</option>
+                    <option value="esercizio" style="background: #0f172a; color: #fff;">✍️ Esercizi</option>
                 </select>
                 
                 <!-- Filtro per Sottogruppo -->
-                <select id="filter-group" onchange="filterQuestions()" style="padding: 10px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: white;">
-                    <option value="all">Tutti i sottogruppi</option>
+                <select id="filter-group" onchange="filterQuestions()" style="padding: 10px; border-radius: 8px; background: rgba(15,23,42,0.9); border: 1px solid var(--glass-border); color: var(--text);">
+                    <option value="all" style="background: #0f172a; color: #fff;">Tutti i sottogruppi</option>
                 </select>
             </div>
         </div>
