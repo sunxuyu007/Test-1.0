@@ -1273,50 +1273,90 @@ function openGroupsView() {
     showView('view-groups');
 }
 
-// ===== POPOLA I FILTRI DEI SOTTOGRUPPI =====
+// ===== INIZIALIZZA FILTRI E RICERCA =====
 function initSearchFilters() {
     const groupSelect = document.getElementById('filter-group');
     if (!groupSelect) return;
 
-    // Resetta le opzioni del menu a tendina dei gruppi
     groupSelect.innerHTML = '<option value="all">Tutti i sottogruppi</option>';
-
     if (!db[currentS] || !db[currentS].groups) return;
 
-    // Popola dinamicamente con i nomi dei gruppi del corso attivo
-    for (let groupName in db[currentS].groups) {
+    for (let gName in db[currentS].groups) {
         const option = document.createElement('option');
-        option.value = groupName;
-        option.textContent = groupName;
+        option.value = gName;
+        option.textContent = gName;
         groupSelect.appendChild(option);
     }
 
-    // Esegue il rendering iniziale
+    // Pulisce la ricerca precedente e mostra la vista di default
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) searchInput.value = '';
+    const typeSelect = document.getElementById('filter-type');
+    if (typeSelect) typeSelect.value = 'all';
+
     filterQuestions();
 }
-
-// Funzione di supporto per mantenere la vecchia vista a gruppi espandibili quando non si cerca nulla
+// ===== VISTA CLASSICA A GRUPPI ESPANDIBILI (SE NESSUNA RICERCA) =====
 function renderClassicGroupsView(container) {
-    if (!db[currentS] || !db[currentS].groups) {
-        container.innerHTML = '<p style="color: var(--text-muted);">Nessun gruppo presente.</p>';
+    const groups = db[currentS].groups;
+    if (!groups || Object.keys(groups).length === 0) {
+        container.innerHTML = '<p style="text-align:center; color:var(--text-muted); padding:40px;">Nessun gruppo in questa materia.</p>';
         return;
     }
 
     let html = '';
-    for (let groupName in db[currentS].groups) {
-        const count = db[currentS].groups[groupName].length;
-        html += '<div class="exercise-card" style="margin-bottom: 12px; padding: 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center;" onclick="expandGroup(\'' + groupName + '\')">' +
-            '<div>' +
-                '<h3 style="font-size: 1rem; color: var(--text-main); margin-bottom: 4px;">📁 ' + groupName + '</h3>' +
-                '<p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">' + count + ' elementi presenti</p>' +
-            '</div>' +
-            '<span style="color: var(--accent);">▶</span>' +
-        '</div>';
+    for (let gName in groups) {
+        const items = groups[gName];
+        const safeG = gName.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        html += '<div class="group-item">' +
+            '<div class="group-header" onclick="toggleGroup(this)">' +
+            '<div class="group-name"><span class="chevron">&#9654;</span> ' + gName + '</div>' +
+            '<div style="display:flex; align-items:center; gap:10px;">' +
+            '<span class="group-count">' + items.length + ' elementi</span>' +
+            '<button class="delete-btn" title="Elimina gruppo" onclick="event.stopPropagation(); deleteGroup(\'' + safeG + '\')" style="font-size:0.85rem;">&#128465;</button>' +
+            '</div></div><div class="group-body">';
+        
+        for (let idx = 0; idx < items.length; idx++) {
+            const item = items[idx];
+            const qText = item.q || 'Senza testo';
+            const preview = qText.substring(0, 120) + (qText.length > 120 ? '...' : '');
+            html += '<div class="question-row">' +
+                '<span class="q-type">' + (item.type || 'flashcard') + '</span>' +
+                '<div class="q-text">' + preview + '</div>' +
+                '<button class="delete-btn" title="Elimina" onclick="deleteQuestion(\'' + safeG + '\', ' + idx + ')">&#10005;</button>' +
+                '</div>';
+        }
+        html += '</div></div>';
     }
     container.innerHTML = html;
 }
 
-// ===== MOTORE DI RICERCA E GESTIONE GRUPPI =====
+function toggleGroup(header) {
+    const chevron = header.querySelector('.chevron');
+    const body = header.nextElementSibling;
+    chevron.classList.toggle('open');
+    body.classList.toggle('open');
+}
+
+function deleteQuestion(gName, idx) {
+    if (!confirm('Eliminare questa domanda?')) return;
+    db[currentS].groups[gName].splice(idx, 1);
+    if (db[currentS].groups[gName].length === 0) delete db[currentS].groups[gName];
+    save();
+    filterQuestions(); // Aggiorna la vista corrente mantenendo i filtri/ricerca
+    renderDropdown();
+    showToast('Domanda eliminata', 'info');
+}
+
+function deleteGroup(gName) {
+    if (!confirm('Eliminare tutto il gruppo "' + gName + '"?')) return;
+    delete db[currentS].groups[gName];
+    save();
+    filterQuestions();
+    renderDropdown();
+    showToast('Gruppo eliminato', 'info');
+}
+
 function filterQuestions() {
     const searchInput = document.getElementById('search-input');
     const typeSelect = document.getElementById('filter-type');
@@ -1329,76 +1369,60 @@ function filterQuestions() {
     const selectedType = typeSelect ? typeSelect.value : 'all';
     const selectedGroup = groupSelect ? groupSelect.value : 'all';
 
-    let html = '';
-    let totalFound = 0;
-
-    // Se NON c'è alcuna ricerca attiva e nessun filtro specifico, mostriamo la visualizzazione classica a gruppi espandibili
+    // Se non ci sono criteri di ricerca attivi, mostra la vista classica a gruppi espandibili
     if (query === '' && selectedType === 'all' && selectedGroup === 'all') {
         renderClassicGroupsView(container);
         return;
     }
 
-    // Altrimenti, mostriamo i risultati filtrati con indicazione del gruppo
-    for (let groupName in db[currentS].groups) {
-        if (selectedGroup !== 'all' && groupName !== selectedGroup) continue;
+    let html = '';
+    let totalFound = 0;
 
-        const items = db[currentS].groups[groupName];
+    for (let gName in db[currentS].groups) {
+        if (selectedGroup !== 'all' && gName !== selectedGroup) continue;
+
+        const items = db[currentS].groups[gName];
         if (!Array.isArray(items)) continue;
 
         let groupHtml = '';
         let groupItemsCount = 0;
 
-        items.forEach(function(item, index) {
-            const isFlashcard = typeof item.answer === 'string' && !item.options;
-            const itemType = isFlashcard ? 'flashcard' : (item.options ? 'quiz' : 'esercizio');
+        items.forEach(function(item, idx) {
+            const qText = item.q || ''; // Legge correttamente la proprietà q del tuo JSON
+            const itemType = item.type || (item.options ? 'quiz' : 'flashcard');
 
             if (selectedType !== 'all' && itemType !== selectedType) return;
 
-            const questionText = (item.question || '').toLowerCase();
-            const explanationText = (item.explanation || '').toLowerCase();
-            const answerText = (typeof item.answer === 'string' ? item.answer : '').toLowerCase();
-            let optionsText = Array.isArray(item.options) ? item.options.join(' ').toLowerCase() : '';
+            // Ricerca testuale focalizzata sul testo della domanda (q) e opzioni/risposte
+            const aText = item.a || '';
+            const optsText = Array.isArray(item.options) ? item.options.map(o => o.text).join(' ') : '';
+            const fullContent = (qText + ' ' + aText + ' ' + optsText).toLowerCase();
 
-            const matchesQuery = query === '' || 
-                questionText.includes(query) || 
-                explanationText.includes(query) || 
-                answerText.includes(query) || 
-                optionsText.includes(query);
-
-            if (matchesQuery) {
+            if (query === '' || fullContent.includes(query)) {
                 groupItemsCount++;
                 totalFound++;
-                
-                const badgeIcon = isFlashcard ? '🎴 Flashcard' : (itemType === 'quiz' ? '📝 Quiz' : '✍️ Esercizio');
-                const badgeColor = isFlashcard ? 'var(--accent)' : 'var(--success)';
 
-                groupHtml += '<div class="stat-card-item" style="margin-bottom: 10px; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 8px;">' +
-                    '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">' +
-                        '<span style="font-size: 0.75rem; background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 4px; color: ' + badgeColor + ';">' + badgeIcon + '</span>' +
-                        '<span style="font-size: 0.75rem; color: var(--text-muted);">📁 Gruppo: <strong>' + groupName + '</strong> (ID: #' + index + ')</span>' +
-                    '</div>' +
-                    '<div style="font-size: 0.9rem; font-weight: 600; color: var(--text-main); margin-bottom: 4px;">' + (item.question || 'Senza titolo') + '</div>';
+                const badgeColor = itemType === 'flashcard' ? 'var(--primary)' : 'var(--success)';
+                const safeG = gName.replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
-                if (isFlashcard) {
-                    groupHtml += '<div style="font-size: 0.8rem; color: var(--text-muted);">Risposta: <em>' + item.answer + '</em></div>';
-                } else if (item.explanation) {
-                    groupHtml += '<div style="font-size: 0.8rem; color: var(--text-muted);">Spiegazione: <em>' + item.explanation + '</em></div>';
-                }
-
-                groupHtml += '</div>';
+                groupHtml += '<div class="question-row" style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:12px 14px; border-radius:12px; background:rgba(255,255,255,0.02); margin:6px 0; border:1px solid var(--glass-border);">' +
+                    '<span class="q-type" style="background:rgba(99,102,241,0.15); color:var(--primary-light); padding:3px 10px; border-radius:8px; font-weight:600; font-size:0.72rem; text-transform:uppercase;">' + itemType + '</span>' +
+                    '<div class="q-text" style="flex:1; font-size:0.88rem; line-height:1.5; color:var(--text);">' + qText + '</div>' +
+                    '<button class="delete-btn" title="Elimina" onclick="deleteQuestion(\'' + safeG + '\', ' + idx + ')">&#10005;</button>' +
+                    '</div>';
             }
         });
 
         if (groupItemsCount > 0) {
             html += '<div style="margin-bottom: 20px;">' +
-                '<h3 style="font-size: 1rem; color: var(--accent); margin-bottom: 8px; border-bottom: 1px solid var(--glass-border); padding-bottom: 4px;">📁 ' + groupName + '</h3>' +
+                '<h3 style="font-size: 1rem; color: var(--accent); margin-bottom: 8px; border-bottom: 1px solid var(--glass-border); padding-bottom: 4px;">📁 ' + gName + '</h3>' +
                 groupHtml +
                 '</div>';
         }
     }
 
     if (totalFound === 0) {
-        html = '<p style="text-align: center; color: var(--text-muted); padding: 30px;">Nessun elemento trovato con i criteri di ricerca attuali.</p>';
+        html = '<p style="text-align: center; color: var(--text-muted); padding: 30px;">Nessun elemento trovato con i criteri attuali.</p>';
     } else {
         html = '<p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">Trovati <strong>' + totalFound + '</strong> elementi:</p>' + html;
     }
