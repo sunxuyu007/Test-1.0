@@ -138,6 +138,12 @@
             
             <textarea id="add-q" placeholder="Testo domanda o esercizio..." rows="3"></textarea>
             <textarea id="add-a" placeholder="Risposta o Svolgimento completo..." rows="3"></textarea>
+
+            <!-- Campo per allegare un'immagine alla RISPOSTA/SVOLGIMENTO -->
+            <div style="margin-bottom: 15px;">
+                <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Allega immagine Risposta / Svolgimento (opzionale):</label>
+                <input type="file" id="add-answer-image" accept="image/png, image/jpeg, image/webp" style="width:100%; padding:10px; background:var(--glass-bg); border:1px solid var(--glass-border); border-radius:12px; color:var(--text-main); cursor:pointer;">
+            </div>
             
             <!-- Campi specifici per Quiz -->
             <div id="quiz-fields" style="display: none; margin-bottom: 15px;">
