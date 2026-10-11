@@ -192,7 +192,7 @@ function editCourse(oldName) {
     let html = '<div class="modal-overlay" onclick="if(event.target===this)closeModal()">' +
         '<div class="modal-card">' +
         '<h3>✏️ Modifica Nome Corso</h3>' +
-        '<p style="color:var(--text-muted); font-size:0.88rem; margin-bottom:16px;">Modifica il nome del corso "' + oldName + '"</p>' +
+        '<p style="color:var(--text-muted); font-size:0.88rem; margin-bottom:16px;">Inserisci il nuovo nome per il corso "' + oldName + '"</p>' +
         '<input type="text" id="modal-edit-course-name" value="' + oldName.replace(/"/g, '&quot;') + '" style="width:100%; padding:12px; border-radius:10px; background:rgba(15,23,42,0.9); border:1px solid var(--glass-border); color:var(--text); margin-bottom:20px; outline:none;">' +
         '<div style="display:flex; gap:10px;">' +
         '<button class="btn" onclick="confirmEditCourse(\'' + oldName.replace(/'/g, "\\'").replace(/"/g, '&quot;') + '\')" style="flex:1; padding:12px;">Salva Modifiche</button>' +
@@ -213,7 +213,7 @@ function editCourse(oldName) {
 }
 
 function confirmEditCourse(oldName) {
-    const input = document.getElementById('modal-edit-course-name');
+   const input = document.getElementById('modal-edit-course-name');
     if (!input) return;
     const newName = input.value.trim();
     if (!newName || newName === oldName) {
@@ -228,6 +228,7 @@ function confirmEditCourse(oldName) {
     db[newName] = db[oldName];
     delete db[oldName];
 
+    // Aggiorna anche i record dei punteggi associati
     const types = ['flashcard', 'quiz', 'esercizio'];
     types.forEach(function(type) {
         const oldKey = oldName + '_' + type;
