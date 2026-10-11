@@ -547,14 +547,14 @@ function renderItem() {
     const item = currentList[currentIdx];
     updateProgress();
     
-    let imgHtml = '';
+    let imgHtml = getImagesHtml(item.images, item.image);
     if (item.image) {
         imgHtml = '<div style="margin: 15px 0; text-align: center; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 12px; border: 1px solid var(--glass-border);">' +
                   '<img src="' + item.image + '" style="max-width: 100%; max-height: 320px; border-radius: 8px; object-fit: contain; display: block; margin: 0 auto;" alt="Immagine Domanda">' +
                   '</div>';
     }
 
-    let ansImgHtml = '';
+    let ansImgHtml = getImagesHtml(item.answerImages, item.answerImage);
     if (item.answerImage) {
         ansImgHtml = '<div style="margin: 15px 0; text-align: center; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 12px; border: 1px solid var(--glass-border);">' +
                      '<img src="' + item.answerImage + '" style="max-width: 100%; max-height: 320px; border-radius: 8px; object-fit: contain; display: block; margin: 0 auto;" alt="Immagine Risposta">' +
@@ -771,75 +771,35 @@ function clearSubject() {
 }
 
 function addManual() {
-    const type = document.getElementById('add-type').value;
+   const type = document.getElementById('add-type').value;
     const gNameInput = document.getElementById('add-group').value;
     const gName = gNameInput ? gNameInput.trim() || "Generale" : "Generale";
     const qInput = document.getElementById('add-q').value;
     const q = qInput ? qInput.trim() : "";
     
     const imageInput = document.getElementById('add-image');
-    const hasImage = imageInput && imageInput.files && imageInput.files[0];
-    
     const ansImageInput = document.getElementById('add-answer-image');
-    const hasAnsImage = ansImageInput && ansImageInput.files && ansImageInput.files[0];
     
-    if (!q && !hasImage) {
-        showToast('Inserisci il testo della domanda o allega un\'immagine', 'error');
+    const hasImages = imageInput && imageInput.files && imageInput.files.length > 0;
+    
+    if (!q && !hasImages) {
+        showToast('Inserisci il testo della domanda o allega almeno un\'immagine', 'error');
         return;
     }
     
     let item = { type: type, q: q, enabled: true };
 
-    function compressAndConvert(file, callback) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const img = new Image();
-            img.onload = function() {
-                const canvas = document.createElement('canvas');
-                let width = img.width;
-                let height = img.height;
-                const maxDim = 800;
-                
-                if (width > height && width > maxDim) {
-                    height *= maxDim / width;
-                    width = maxDim;
-                } else if (height > maxDim) {
-                    width *= maxDim / height;
-                    height = maxDim;
-                }
-                
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-                callback(canvas.toDataURL('image/jpeg', 0.8));
-            };
-            img.onerror = function() { callback(e.target.result); };
-            img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-    }
-
-    if (hasImage) {
-        compressAndConvert(imageInput.files[0], function(base64Q) {
-            item.image = base64Q;
-            if (hasAnsImage) {
-                compressAndConvert(ansImageInput.files[0], function(base64A) {
-                    item.answerImage = base64A;
-                    finishAddManual(item, gName);
-                });
-            } else {
-                finishAddManual(item, gName);
+    processFiles(imageInput.files, function(base64ImagesQ) {
+        if (base64ImagesQ.length > 0) {
+            item.images = base64ImagesQ; // Salva l'array di immagini
+        }
+        processFiles(ansImageInput.files, function(base64ImagesA) {
+            if (base64ImagesA.length > 0) {
+                item.answerImages = base64ImagesA; // Salva l'array di immagini risposta
             }
-        });
-    } else if (hasAnsImage) {
-        compressAndConvert(ansImageInput.files[0], function(base64A) {
-            item.answerImage = base64A;
             finishAddManual(item, gName);
         });
-    } else {
-        finishAddManual(item, gName);
-    }
+    });
 }
 
 function finishAddManual(item, gName) {
@@ -1452,9 +1412,10 @@ function handleImageSelection(input, type) {
     const textEl = document.getElementById('file-text-' + type);
     const removeBtn = document.getElementById('file-remove-' + type);
     
-    if (input.files && input.files[0]) {
+    if (input.files && input.files.length > 0) {
+        const count = input.files.length;
         if (textEl) {
-            textEl.innerHTML = '<strong style="color:var(--success);">' + input.files[0].name + '</strong>';
+            textEl.innerHTML = '<strong style="color:var(--success);">' + count + ' ' + (count === 1 ? 'immagine selezionata' : 'immagini selezionate') + '</strong>';
         }
         if (removeBtn) {
             removeBtn.style.display = 'inline-block';
@@ -1465,18 +1426,68 @@ function handleImageSelection(input, type) {
 function removeImage(type) {
     const inputId = type === 'q' ? 'add-image' : 'add-answer-image';
     const input = document.getElementById(inputId);
-    if (input) {
-        input.value = ''; // Pulisce il file input
-    }
+    if (input) input.value = '';
     
     const textEl = document.getElementById('file-text-' + type);
     const removeBtn = document.getElementById('file-remove-' + type);
     
-    if (textEl) {
-        textEl.innerText = 'Scegli immagine...';
+    if (textEl) textEl.innerText = 'Scegli immagini...';
+    if (removeBtn) removeBtn.style.display = 'none';
+    showToast('Immagini rimosse', 'info');
+}
+
+function processFiles(files, callback) {
+    if (!files || files.length === 0) {
+        callback([]);
+        return;
     }
-    if (removeBtn) {
-        removeBtn.style.display = 'none';
-    }
-    showToast('Immagine rimossa', 'info');
+    const results = [];
+    let processed = 0;
+    
+    Array.from(files).forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                const maxDim = 800;
+                
+                if (width > height && width > maxDim) {
+                    height *= maxDim / width;
+                    width = maxDim;
+                } else if (height > maxDim) {
+                    width *= maxDim / height;
+                    height = maxDim;
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                results[index] = canvas.toDataURL('image/jpeg', 0.8);
+                processed++;
+                if (processed === files.length) callback(results);
+            };
+            img.onerror = function() {
+                results[index] = e.target.result;
+                processed++;
+                if (processed === files.length) callback(results);
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+function getImagesHtml(imagesArray, singleImage) {
+    let html = '';
+    const list = imagesArray && imagesArray.length > 0 ? imagesArray : (singleImage ? [singleImage] : []);
+    list.forEach(src => {
+        html += '<div style="margin: 15px 0; text-align: center; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 12px; border: 1px solid var(--glass-border);">' +
+                '<img src="' + src + '" style="max-width: 100%; max-height: 320px; border-radius: 8px; object-fit: contain; display: block; margin: 0 auto;" alt="Immagine">' +
+                '</div>';
+    });
+    return html;
 }
