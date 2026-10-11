@@ -672,6 +672,28 @@ function showResults() {
     const timeStr = formatTime(elapsed);
     const pct = sessionTotal > 0 ? Math.round((sessionScore / sessionTotal) * 100) : 0;
 
+    // --- CALCOLO ERRORI DELLA SESSIONE ---
+    // Per i quiz calcoliamo gli errori come totali meno quelli corretti. 
+    // Per flashcard ed esercizi, consideriamo eventuali risposte non note o possiamo tracciarle.
+    let sessionErrors = sessionTotal - sessionScore;
+
+    // --- SALVATAGGIO STATISTICHE NEL DATABASE DEL CORSO ---
+    if (currentS && currentA) {
+        if (!db[currentS]) db[currentS] = { groups: {} };
+        if (!db[currentS].stats) db[currentS].stats = {};
+        if (!db[currentS].stats[currentA]) {
+            db[currentS].stats[currentA] = { sessions: 0, totalTime: 0, totalErrors: 0 };
+        }
+
+        const stat = db[currentS].stats[currentA];
+        stat.sessions += 1;
+        stat.totalTime += elapsed;
+        stat.totalErrors += sessionErrors;
+
+        save(); // Scrive immediatamente su database.json e localStorage!
+    }
+
+    // Il resto della funzione per mostrare il punteggio...
     const scoreKey = currentS + '_' + currentA;
     const prev = scores[scoreKey];
     let isNewBest = false;
@@ -683,7 +705,7 @@ function showResults() {
 
     let emoji = '😢';
     let color = 'var(--danger)';
-    if (pct >= 90) { emoji = '&#127942;'; color = '#f59e0b'; }
+    if (pct >= 90) { emoji = '🏆'; color = '#f59e0b'; }
     else if (pct >= 70) { emoji = '🎉'; color = 'var(--success)'; }
     else if (pct >= 50) { emoji = '😊'; color = 'var(--accent)'; }
 
@@ -695,21 +717,21 @@ function showResults() {
         '<div class="results-detail">Tempo: <strong>' + timeStr + '</strong></div>';
 
     if (isNewBest) {
-        html += '<div class="best-score-badge">&#127942; NUOVO RECORD!</div>';
+        html += '<div class="best-score-badge">🏆 NUOVO RECORD!</div>';
     } else if (prev) {
         html += '<div style="margin-top:12px; font-size:0.82rem; color:var(--text-muted);">Miglior punteggio: ' + prev.score + '/' + prev.total + ' (' + prev.pct + '%) &mdash; ' + prev.time + '</div>';
     }
 
     html += '<div style="margin-top:28px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">' +
         '<button class="btn" onclick="openPreset(\'' + currentA + '\')">Riprova</button>' +
-        '<button class="btn btn-back" onclick="showView(\'view-subject-menu\')">&#8592; Menu</button>' +
+        '<button class="btn btn-ghost" onclick="openStatsView()">📊 Visualizza Statistiche</button>' +
+        '<button class="btn btn-back" onclick="showView(\'view-subject-menu\')">← Menu</button>' +
         '</div></div>';
 
     const resultsContent = document.getElementById('results-content');
     if (resultsContent) resultsContent.innerHTML = html;
     showView('view-results');
 }
-
 // ===== UTILS =====
 async function connectToFile() {
     try {
@@ -1108,4 +1130,57 @@ function renderMedia(val) {
     
     // Se è solo testo semplice, preserva comunque i "a capo"
     return val.replace(/\n/g, '<br>');
+}
+
+function openStatsView() {
+    const container = document.getElementById('stats-content');
+    if (!container) return;
+
+    const stats = db[currentS] && db[currentS].stats ? db[currentS].stats : {};
+    const types = [
+        { key: 'flashcard', label: '🎴 Flashcards' },
+        { key: 'quiz', label: '📝 Quiz' },
+        { key: 'esercizio', label: '✍️ Esercizi' }
+    ];
+
+    let html = '<h3 style="margin-bottom:20px;">Riepilogo Medie &mdash; ' + currentS + '</h3>';
+    
+    let hasData = false;
+
+    types.forEach(function(t) {
+        const data = stats[t.key];
+        if (data && data.sessions > 0) {
+            hasData = true;
+            const avgTime = Math.round(data.totalTime / data.sessions);
+            const avgErrors = (data.totalErrors / data.sessions).toFixed(1);
+            
+            // Calcolo larghezza barre grafico (proporzionale indicativa)
+            const timeBarWidth = Math.min(100, (avgTime / 60) * 20); // scala in base ai secondi
+            const errorBarWidth = Math.min(100, avgErrors * 15);
+
+            html += '<div style="margin-bottom:20px; padding:15px; background:var(--glass-bg); border-radius:12px; border:1px solid var(--glass-border);">' +
+                '<h4 style="margin-bottom:8px; color:var(--accent);">' + t.label + ' <span style="font-size:0.8rem; color:var(--text-muted);">(Sessioni: ' + data.sessions + ')</span></h4>' +
+                
+                // Barra Tempo Medio
+                '<div style="font-size:0.85rem; margin-bottom:4px; display:flex; justify-content:between;"><span>⏱️ Tempo Medio: <strong>' + formatTime(avgTime) + '</strong></span></div>' +
+                '<div style="background:rgba(255,255,255,0.05); height:10px; border-radius:5px; overflow:hidden; margin-bottom:10px;">' +
+                '<div style="background:linear-gradient(90deg, var(--accent), var(--success)); width:' + timeBarWidth + '%; height:100%; border-radius:5px;"></div>' +
+                '</div>' +
+
+                // Barra Errori Medi
+                '<div style="font-size:0.85rem; margin-bottom:4px;"><span>❌ Errori Medi per sessione: <strong>' + avgErrors + '</strong></span></div>' +
+                '<div style="background:rgba(255,255,255,0.05); height:10px; border-radius:5px; overflow:hidden;">' +
+                '<div style="background:var(--danger); width:' + errorBarWidth + '%; height:100%; border-radius:5px;"></div>' +
+                '</div>' +
+
+                '</div>';
+        }
+    });
+
+    if (!hasData) {
+        html += '<p style="text-align:center; color:var(--text-muted); padding:30px;">Nessuna statistica registrata per questo corso. Completa qualche sessione di studio per visualizzare i grafici!</p>';
+    }
+
+    container.innerHTML = html;
+    showView('view-stats');
 }
