@@ -1278,17 +1278,19 @@ function initSearchFilters() {
     const groupSelect = document.getElementById('filter-group');
     if (!groupSelect) return;
 
-    groupSelect.innerHTML = '<option value="all">Tutti i sottogruppi</option>';
+    groupSelect.innerHTML = '<option value="all" style="background: #0f172a; color: #fff;">Tutti i sottogruppi</option>';
     if (!db[currentS] || !db[currentS].groups) return;
 
     for (let gName in db[currentS].groups) {
         const option = document.createElement('option');
         option.value = gName;
         option.textContent = gName;
+        // Imposta lo stile scuro per le opzioni del menu a tendina
+        option.style.background = '#0f172a';
+        option.style.color = '#fff';
         groupSelect.appendChild(option);
     }
 
-    // Pulisce la ricerca precedente e mostra la vista di default
     const searchInput = document.getElementById('search-input');
     if (searchInput) searchInput.value = '';
     const typeSelect = document.getElementById('filter-type');
