@@ -1498,13 +1498,12 @@ function handleImageSelection(input, type) {
     Array.from(input.files).forEach(file => {
         const reader = new FileReader();
         reader.onload = function(e) {
-            // Comprimiamo l'immagine prima di salvarla nell'anteprima temporanea
             const img = new Image();
             img.onload = function() {
                 const canvas = document.createElement('canvas');
                 let width = img.width;
                 let height = img.height;
-                const maxDim = 800;
+                const maxDim = 600; // Ridotto a 600px per alleggerire drasticamente il peso in localStorage
                 
                 if (width > height && width > maxDim) {
                     height *= maxDim / width;
@@ -1519,14 +1518,19 @@ function handleImageSelection(input, type) {
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
                 
-                targetArray.push(canvas.toDataURL('image/jpeg', 0.8));
+                // Qualità ridotta al 70% per garantire che la stringa Base64 sia leggera e non corrompa il localStorage
+                const base64Data = canvas.toDataURL('image/jpeg', 0.7);
+                targetArray.push(base64Data);
                 renderImagePreviews(type);
+            };
+            img.onerror = function() {
+                showToast('Errore nel caricamento del file immagine', 'error');
             };
             img.src = e.target.result;
         };
         reader.readAsDataURL(file);
     });
-    input.value = ''; // Pulisce l'input per permettere di riselezionare gli stessi file se necessario
+    input.value = '';
 }
 
 function renderImagePreviews(type) {
