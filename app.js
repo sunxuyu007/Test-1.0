@@ -1431,3 +1431,83 @@ function filterQuestions() {
 
     container.innerHTML = html;
 }
+
+// ===== APRI MODALE DI MODIFICA DOMANDA =====
+function openEditModal(gName, idx) {
+    const item = db[currentS].groups[gName][idx];
+    const isQuiz = item.type === 'quiz';
+    
+    let html = '<div class="modal-overlay" onclick="if(event.target===this)closeModal()">' +
+        '<div class="modal-card">' +
+        '<h3>✏️ Modifica Elemento</h3>' +
+        '<label style="font-size:0.82rem; color:var(--text-muted); display:block; margin-top:10px;">Sottogruppo</label>' +
+        '<input type="text" id="edit-group" value="' + gName.replace(/"/g, '&quot;') + '" placeholder="Sottogruppo">' +
+        '<label style="font-size:0.82rem; color:var(--text-muted); display:block; margin-top:10px;">Testo Domanda</label>' +
+        '<textarea id="edit-q" rows="3" placeholder="Domanda...">' + (item.q || '').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</textarea>';
+    
+    if (isQuiz) {
+        html += '<label style="font-size:0.82rem; color:var(--text-muted); display:block; margin-top:10px;">Opzioni del Quiz</label><div id="edit-quiz-fields" style="margin-top:6px;">';
+        if (item.options) {
+            item.options.forEach((opt, oIdx) => {
+                html += '<div style="display:flex; gap:8px; margin-bottom:8px; align-items:center;">' +
+                    '<input type="text" class="edit-opt-text" value="' + opt.text.replace(/"/g, '&quot;') + '" style="margin:0; flex:1;">' +
+                    '<label style="font-size:0.8rem; display:flex; align-items:center; gap:4px; white-space:nowrap;"><input type="checkbox" class="edit-opt-correct" ' + (opt.isCorrect ? 'checked' : '') + '> Corretta</label>' +
+                    '</div>';
+            });
+        }
+        html += '</div>';
+    } else {
+        html += '<label style="font-size:0.82rem; color:var(--text-muted); display:block; margin-top:10px;">Risposta / Svolgimento</label>' +
+            '<textarea id="edit-a" rows="3" placeholder="Risposta...">' + (item.a || '').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</textarea>';
+    }
+
+    html += '<div style="margin-top:24px; display:flex; gap:10px;">' +
+        '<button class="btn" onclick="saveEditedQuestion(\'' + gName.replace(/'/g, "\\'").replace(/"/g, '&quot;') + '\', ' + idx + ')" style="flex:1; padding:12px;">Salva Modifiche</button>' +
+        '<button class="btn btn-back" onclick="closeModal()">Annulla</button></div>' +
+        '</div></div>';
+
+    document.getElementById('modal-root').innerHTML = html;
+}
+
+// ===== SALVA LE MODIFICHE DELLA DOMANDA =====
+function saveEditedQuestion(oldGName, idx) {
+    const item = db[currentS].groups[oldGName][idx];
+    const newGName = document.getElementById('edit-group').value.trim() || oldGName;
+    const newQ = document.getElementById('edit-q').value.trim();
+    
+    if (!newQ) {
+        showToast('Il testo della domanda non può essere vuoto', 'error');
+        return;
+    }
+
+    item.q = newQ;
+    if (item.type === 'quiz') {
+        const optTexts = document.querySelectorAll('.edit-opt-text');
+        const optCorrects = document.querySelectorAll('.edit-opt-correct');
+        let newOptions = [];
+        for (let i = 0; i < optTexts.length; i++) {
+            newOptions.push({
+                text: optTexts[i].value.trim(),
+                isCorrect: optCorrects[i].checked
+            });
+        }
+        item.options = newOptions;
+    } else {
+        const editA = document.getElementById('edit-a');
+        if (editA) item.a = editA.value;
+    }
+
+    // Se è cambiato il nome del gruppo, sposta l'elemento nel nuovo gruppo
+    if (newGName !== oldGName) {
+        db[currentS].groups[oldGName].splice(idx, 1);
+        if (db[currentS].groups[oldGName].length === 0) delete db[currentS].groups[oldGName];
+        if (!db[currentS].groups[newGName]) db[currentS].groups[newGName] = [];
+        db[currentS].groups[newGName].push(item);
+    }
+
+    save();
+    closeModal();
+    filterQuestions();
+    renderDropdown();
+    showToast('Elemento modificato con successo!', 'success');
+}
