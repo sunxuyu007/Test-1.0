@@ -1132,6 +1132,7 @@ function renderMedia(val) {
     return val.replace(/\n/g, '<br>');
 }
 
+// ===== VISUALIZZA STATISTICHE & GRAFICI =====
 function openStatsView() {
     const container = document.getElementById('stats-content');
     if (!container) return;
@@ -1143,7 +1144,7 @@ function openStatsView() {
         { key: 'esercizio', label: '✍️ Esercizi' }
     ];
 
-    let html = '<h3 style="margin-bottom:20px;">Riepilogo Medie &mdash; ' + currentS + '</h3>';
+    let html = '<h3 style="margin-bottom:20px; font-size:1.2rem; color:var(--text-main);">Riepilogo Medie &mdash; ' + currentS + '</h3>';
     
     let hasData = false;
 
@@ -1154,23 +1155,23 @@ function openStatsView() {
             const avgTime = Math.round(data.totalTime / data.sessions);
             const avgErrors = (data.totalErrors / data.sessions).toFixed(1);
             
-            // Calcolo larghezza barre grafico (proporzionale indicativa)
-            const timeBarWidth = Math.min(100, (avgTime / 60) * 20); // scala in base ai secondi
+            // Calcolo larghezza percentuale per le barre del grafico
+            const timeBarWidth = Math.min(100, (avgTime / 60) * 20);
             const errorBarWidth = Math.min(100, avgErrors * 15);
 
-            html += '<div style="margin-bottom:20px; padding:15px; background:var(--glass-bg); border-radius:12px; border:1px solid var(--glass-border);">' +
-                '<h4 style="margin-bottom:8px; color:var(--accent);">' + t.label + ' <span style="font-size:0.8rem; color:var(--text-muted);">(Sessioni: ' + data.sessions + ')</span></h4>' +
+            html += '<div class="stat-card-item">' +
+                '<h4 style="margin-bottom:10px; color:var(--accent); font-size:1.05rem;">' + t.label + ' <span style="font-size:0.8rem; color:var(--text-muted); font-weight:normal;">(Sessioni: ' + data.sessions + ')</span></h4>' +
                 
                 // Barra Tempo Medio
-                '<div style="font-size:0.85rem; margin-bottom:4px; display:flex; justify-content:between;"><span>⏱️ Tempo Medio: <strong>' + formatTime(avgTime) + '</strong></span></div>' +
-                '<div style="background:rgba(255,255,255,0.05); height:10px; border-radius:5px; overflow:hidden; margin-bottom:10px;">' +
-                '<div style="background:linear-gradient(90deg, var(--accent), var(--success)); width:' + timeBarWidth + '%; height:100%; border-radius:5px;"></div>' +
+                '<div style="font-size:0.85rem; margin-bottom:2px; color:var(--text-main);">⏱️ Tempo Medio: <strong>' + formatTime(avgTime) + '</strong></div>' +
+                '<div class="stat-bar-track">' +
+                '<div class="stat-bar-time" style="width:' + timeBarWidth + '%;"></div>' +
                 '</div>' +
 
                 // Barra Errori Medi
-                '<div style="font-size:0.85rem; margin-bottom:4px;"><span>❌ Errori Medi per sessione: <strong>' + avgErrors + '</strong></span></div>' +
-                '<div style="background:rgba(255,255,255,0.05); height:10px; border-radius:5px; overflow:hidden;">' +
-                '<div style="background:var(--danger); width:' + errorBarWidth + '%; height:100%; border-radius:5px;"></div>' +
+                '<div style="font-size:0.85rem; margin-bottom:2px; color:var(--text-main);">❌ Errori Medi per sessione: <strong>' + avgErrors + '</strong></div>' +
+                '<div class="stat-bar-track">' +
+                '<div class="stat-bar-error" style="width:' + errorBarWidth + '%;"></div>' +
                 '</div>' +
 
                 '</div>';
