@@ -148,56 +148,70 @@
         <div id="stats-content" class="exercise-card"></div>
     </div>
 
-    <!-- MANAGER -->
+    <!-- MANAGER (Interfaccia Migliorata e Ottimizzata) -->
     <div id="view-manager" class="view">
         <button class="btn btn-back" onclick="showView('view-subject-menu')">&#8592; Indietro</button>
-        <div class="panel" style="margin-top:20px;">
-    <h4>🔗 Sync File Locale</h4>
-    
-    <!-- Contenitore Flex per allineare gli elementi a sinistra e il backup a destra -->
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; margin-top: 12px;">
-        <div>
-            <button class="btn" onclick="connectToFile()">Connetti database.json</button>
-            <div id="sync-info" style="font-size:0.82rem; margin-top:8px; color:var(--text-muted);">Stato: Browser Storage</div>
+        
+        <!-- Pannello Sincronizzazione e Backup -->
+        <div class="panel" style="margin-top:20px; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid var(--glass-border); border-radius: 20px; padding: 24px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+                <span style="font-size: 1.3rem;">🔗</span>
+                <h4 style="margin: 0; font-size: 1.15rem; font-weight: 600; color: var(--text-main);">Sincronizzazione e Backup</h4>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; background: rgba(255, 255, 255, 0.02); padding: 18px; border-radius: 14px; border: 1px solid var(--glass-border);">
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <button class="btn" onclick="connectToFile()" style="display: inline-flex; align-items: center; gap: 8px; width: fit-content;">📁 Connetti database.json</button>
+                    <div id="sync-info" style="font-size: 0.82rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
+                        <span style="width: 8px; height: 8px; background: #f59e0b; border-radius: 50%; display: inline-block; box-shadow: 0 0 8px rgba(245,158,11,0.5);"></span>
+                        Stato: Browser Storage
+                    </div>
+                </div>
+                <button class="btn btn-ghost" onclick="downloadDatabase()" style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 18px;">📥 Scarica Backup (JSON)</button>
+            </div>
         </div>
-        <button class="btn btn-ghost" onclick="downloadDatabase()">📥 Scarica Database (Backup)</button>
-    </div>
-</div>
-        <div class="panel">
-            <h4>&#10133; Aggiungi Manualmente</h4>
-            <select id="add-type">
+
+        <!-- Pannello Aggiunta Manuale -->
+        <div class="panel" style="background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid var(--glass-border); border-radius: 20px; padding: 24px; margin-top: 20px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+                <span style="font-size: 1.3rem;">➕</span>
+                <h4 style="margin: 0; font-size: 1.15rem; font-weight: 600; color: var(--text-main);">Aggiungi Manualmente</h4>
+            </div>
+            
+            <select id="add-type" style="margin-bottom: 14px;">
                 <option value="flashcard">Flashcard</option>
                 <option value="quiz">Quiz</option>
                 <option value="esercizio">Esercizio Svolto</option>
             </select>
             
-            <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px;">
+            <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 14px;">
                 <input type="text" id="add-group" list="group-options" placeholder="Seleziona o scrivi Sottogruppo..." style="flex: 1;">
                 <datalist id="group-options"></datalist>
             </div>
             
-            <textarea id="add-q" placeholder="Testo domanda o esercizio..." rows="3"></textarea>
+            <textarea id="add-q" placeholder="Testo domanda o esercizio..." rows="3" style="margin-bottom: 14px;"></textarea>
 
-         <!-- Campo per allegare un'immagine Domanda -->
-<div style="margin-bottom: 15px;">
-    <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Allega immagine Domanda (opzionale):</label>
-    <label class="btn btn-ghost" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 12px 16px; background: rgba(15,23,42,0.9); border: 1px solid var(--glass-border); border-radius: 12px; color: var(--text-main); font-weight: 400; text-transform: none;">
-        <span id="file-label-q" style="display: flex; align-items: center; gap: 8px;">📷 Scegli immagine...</span>
-        <span style="font-size: 0.8rem; opacity: 0.7;">Sfoglia</span>
-        <input type="file" id="add-image" accept="image/png, image/jpeg, image/webp" style="display: none;" onchange="updateFileName(this, 'file-label-q')">
-    </label>
-</div>
+            <!-- Campo Immagine Domanda -->
+            <div style="margin-bottom: 15px;">
+                <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Allega immagine Domanda (opzionale):</label>
+                <label class="btn btn-ghost" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 12px 16px; background: rgba(15,23,42,0.9); border: 1px solid var(--glass-border); border-radius: 12px; color: var(--text-main); font-weight: 400; text-transform: none;">
+                    <span id="file-label-q" style="display: flex; align-items: center; gap: 8px;">📷 Scegli immagine...</span>
+                    <span style="font-size: 0.8rem; opacity: 0.7;">Sfoglia</span>
+                    <input type="file" id="add-image" accept="image/png, image/jpeg, image/webp" style="display: none;" onchange="updateFileName(this, 'file-label-q')">
+                </label>
+            </div>
             
-            <textarea id="add-a" placeholder="Risposta o Svolgimento completo..." rows="3"></textarea>
-<!-- Campo per allegare un'immagine Risposta / Svolgimento -->
-<div style="margin-bottom: 15px;">
-    <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Allega immagine Risposta / Svolgimento (opzionale):</label>
-    <label class="btn btn-ghost" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 12px 16px; background: rgba(15,23,42,0.9); border: 1px solid var(--glass-border); border-radius: 12px; color: var(--text-main); font-weight: 400; text-transform: none;">
-        <span id="file-label-a" style="display: flex; align-items: center; gap: 8px;">📷 Scegli immagine...</span>
-        <span style="font-size: 0.8rem; opacity: 0.7;">Sfoglia</span>
-        <input type="file" id="add-answer-image" accept="image/png, image/jpeg, image/webp" style="display: none;" onchange="updateFileName(this, 'file-label-a')">
-    </label>
-</div>
+            <textarea id="add-a" placeholder="Risposta o Svolgimento completo..." rows="3" style="margin-bottom: 14px;"></textarea>
+
+            <!-- Campo Immagine Risposta -->
+            <div style="margin-bottom: 15px;">
+                <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Allega immagine Risposta / Svolgimento (opzionale):</label>
+                <label class="btn btn-ghost" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 12px 16px; background: rgba(15,23,42,0.9); border: 1px solid var(--glass-border); border-radius: 12px; color: var(--text-main); font-weight: 400; text-transform: none;">
+                    <span id="file-label-a" style="display: flex; align-items: center; gap: 8px;">📷 Scegli immagine...</span>
+                    <span style="font-size: 0.8rem; opacity: 0.7;">Sfoglia</span>
+                    <input type="file" id="add-answer-image" accept="image/png, image/jpeg, image/webp" style="display: none;" onchange="updateFileName(this, 'file-label-a')">
+                </label>
+            </div>
             
             <div id="quiz-fields" style="display: none; margin-bottom: 15px;">
                 <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Opzioni di risposta (spunta la casella se è corretta):</label>
@@ -216,11 +230,16 @@
                 <button type="button" class="btn btn-sm btn-ghost" onclick="addQuizOptionRow()" style="font-size:0.85rem; margin-bottom: 12px;">➕ Aggiungi opzione</button>
             </div>
 
-            <button class="btn" onclick="addManual()" style="margin-top:8px;">Salva nel Database</button>
+            <button class="btn" onclick="addManual()" style="margin-top:8px; width: 100%; padding: 14px;">Salva nel Database</button>
         </div>
-        <div class="panel">
-            <h4>🚀 Importazione / Formattazione</h4>
-            <textarea id="import-area" placeholder="Incolla JSON massivo qui..." rows="4"></textarea>
+
+        <!-- Pannello Importazione / Formattazione -->
+        <div class="panel" style="background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid var(--glass-border); border-radius: 20px; padding: 24px; margin-top: 20px; margin-bottom: 40px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+                <span style="font-size: 1.3rem;">🚀</span>
+                <h4 style="margin: 0; font-size: 1.15rem; font-weight: 600; color: var(--text-main);">Importazione / Formattazione</h4>
+            </div>
+            <textarea id="import-area" placeholder="Incolla JSON massivo qui..." rows="4" style="margin-bottom: 14px;"></textarea>
             <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;">
                 <button class="btn" onclick="doImport()">Importa Dati</button>
                 <button class="btn btn-danger" onclick="clearSubject()">Svuota Materia</button>
