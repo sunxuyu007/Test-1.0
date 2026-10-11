@@ -639,31 +639,28 @@ function revealSolution(btn) {
 }
 
 function nextItem() {
-    if (quizAutoAdvance) { clearTimeout(quizAutoAdvance); quizAutoAdvance = null; }
+   if (quizAutoAdvance) { clearTimeout(quizAutoAdvance); quizAutoAdvance = null; }
     if (currentIdx < currentList.length - 1) {
         currentIdx++;
         renderItem();
     } else {
-        if (currentA === 'quiz') {
-            showResults();
-        } else {
-            showToast('Sessione completata! Ricominciando...', 'success');
-            currentIdx = 0;
-            renderItem();
-        }
+        // Mostra la schermata di riepilogo per QUALSIASI modalità (Quiz, Flashcard, Esercizi)
+        showResults();
     }
 }
 
 // ===== RESULTS =====
 function showResults() {
-    clearInterval(timerInterval);
+   clearInterval(timerInterval);
     if (quizAutoAdvance) { clearTimeout(quizAutoAdvance); quizAutoAdvance = null; }
 
     const elapsed = timerLimit > 0 ? (timerLimit - Math.max(timerSeconds, 0)) : timerSeconds;
     const timeStr = formatTime(elapsed);
     const pct = sessionTotal > 0 ? Math.round((sessionScore / sessionTotal) * 100) : 0;
     let sessionErrors = sessionTotal - sessionScore;
+    const avgTimePerItem = sessionTotal > 0 ? (elapsed / sessionTotal).toFixed(1) : 0;
 
+    // Salvataggio e aggiornamento statistiche nel database del corso
     if (currentS && currentA) {
         if (!db[currentS]) db[currentS] = { groups: {} };
         if (!db[currentS].stats) db[currentS].stats = {};
@@ -674,43 +671,65 @@ function showResults() {
         const stat = db[currentS].stats[currentA];
         stat.sessions += 1;
         stat.totalTime += elapsed;
-        stat.totalErrors += sessionErrors;
+        stat.totalErrors += (currentA === 'quiz' ? sessionErrors : 0);
 
         save();
     }
 
+    // Recupero metriche storiche aggregate dal database
+    const statsData = db[currentS] && db[currentS].stats && db[currentS].stats[currentA] ? db[currentS].stats[currentA] : null;
+    const avgSessionTime = statsData ? formatTime(Math.round(statsData.totalTime / statsData.sessions)) : timeStr;
+    const avgErrorsVal = statsData && statsData.sessions > 0 ? (statsData.totalErrors / statsData.sessions).toFixed(1) : sessionErrors;
+
     const scoreKey = currentS + '_' + currentA;
     const prev = scores[scoreKey];
     let isNewBest = false;
-    if (!prev || pct > prev.pct || (pct === prev.pct && elapsed < (prev.elapsedSec || Infinity))) {
+    if (currentA === 'quiz' && (!prev || pct > prev.pct || (pct === prev.pct && elapsed < (prev.elapsedSec || Infinity)))) {
         scores[scoreKey] = { score: sessionScore, total: sessionTotal, pct: pct, time: timeStr, elapsedSec: elapsed };
         localStorage.setItem(SCORES_KEY, JSON.stringify(scores));
         isNewBest = true;
     }
 
-    let emoji = '😢';
-    let color = 'var(--danger)';
-    if (pct >= 90) { emoji = '🏆'; color = '#f59e0b'; }
-    else if (pct >= 70) { emoji = '🎉'; color = 'var(--success)'; }
-    else if (pct >= 50) { emoji = '😊'; color = 'var(--accent)'; }
+    let emoji = '🏆';
+    let color = 'var(--success)';
+    if (currentA === 'quiz') {
+        if (pct >= 90) { emoji = '🌟'; color = '#f59e0b'; }
+        else if (pct >= 70) { emoji = '🎉'; color = 'var(--success)'; }
+        else { emoji = '💪'; color = 'var(--accent)'; }
+    }
 
     let html = '<div class="results-card">' +
         '<div style="font-size:3rem; margin-bottom:10px;">' + emoji + '</div>' +
-        '<h2>Sessione Completata!</h2>' +
-        '<div class="results-score" style="color:' + color + ';">' + pct + '%</div>' +
-        '<div class="results-detail">Punteggio: <strong>' + sessionScore + '</strong> / ' + sessionTotal + '</div>' +
-        '<div class="results-detail">Tempo: <strong>' + timeStr + '</strong></div>';
+        '<h2>Riepilogo Sessione</h2>';
 
-    if (isNewBest) {
-        html += '<div class="best-score-badge">🏆 NUOVO RECORD!</div>';
-    } else if (prev) {
-        html += '<div style="margin-top:12px; font-size:0.82rem; color:var(--text-muted);">Miglior punteggio: ' + prev.score + '/' + prev.total + ' (' + prev.pct + '%) &mdash; ' + prev.time + '</div>';
+    if (currentA === 'quiz') {
+        html += '<div class="results-score" style="color:' + color + ';">' + pct + '%</div>' +
+                '<div class="results-detail">Punteggio: <strong>' + sessionScore + '</strong> / ' + sessionTotal + '</div>';
+    } else {
+        html += '<div class="results-score" style="color:var(--accent);">Completato!</div>' +
+                '<div class="results-detail">Elementi studiati: <strong>' + sessionTotal + '</strong></div>';
     }
 
+    // Dettagli e metriche di tempo ed errori
+    html += '<div class="results-detail">⏱️ Tempo totale impiegato: <strong>' + timeStr + '</strong></div>' +
+            '<div class="results-detail">⚡ Tempo medio per elemento: <strong>' + avgTimePerItem + ' s</strong></div>';
+
+    if (currentA === 'quiz') {
+        html += '<div class="results-detail">❌ Errori in questa sessione: <strong>' + sessionErrors + '</strong></div>' +
+                '<div class="results-detail">📊 Media errori storici: <strong>' + avgErrorsVal + '</strong></div>';
+    }
+
+    html += '<div class="results-detail" style="margin-top:6px; opacity:0.85; font-size:0.85rem;">📈 Tempo medio storico sessioni: <strong>' + avgSessionTime + '</strong></div>';
+
+    if (isNewBest) {
+        html += '<div class="best-score-badge" style="margin-top:12px;">🏆 NUOVO RECORD DI PUNTEGGIO!</div>';
+    }
+
+    // Pulsanti di azione richiesti: Riprova/Conferma ed Esci
     html += '<div style="margin-top:28px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">' +
-        '<button class="btn" onclick="openPreset(\'' + currentA + '\')">Riprova</button>' +
-        '<button class="btn btn-ghost" onclick="openStatsView()">📊 Visualizza Statistiche</button>' +
-        '<button class="btn btn-back" onclick="showView(\'view-subject-menu\')">← Menu</button>' +
+        '<button class="btn" onclick="openPreset(\'' + currentA + '\')">🔄 Riprova / Conferma</button>' +
+        '<button class="btn btn-ghost" onclick="openStatsView()">📊 Statistiche</button>' +
+        '<button class="btn btn-back" onclick="showView(\'view-subject-menu\')">🚪 Esci</button>' +
         '</div></div>';
 
     const resultsContent = document.getElementById('results-content');
