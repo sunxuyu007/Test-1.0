@@ -723,7 +723,24 @@ async function connectToFile() {
     } catch (e) { if (e.name !== 'AbortError') showToast('Errore nella connessione', 'error'); }
 }
 
-function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); }
+async function save() {
+    // 1. Salvataggio di sicurezza locale nel browser
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+    
+    // 2. Scrittura fisica e persistente sul file JSON esterno tramite File System API
+    if (fileHandle) {
+        try {
+            const writable = await fileHandle.createWritable();
+            await writable.write(JSON.stringify(db, null, 2));
+            await writable.close();
+        } catch (e) {
+            if (e.name !== 'AbortError') {
+                console.error("Errore di scrittura sul file:", e);
+                showToast('Errore di scrittura sul file JSON del PC!', 'error');
+            }
+        }
+    }
+}
 
 function showView(id) {
     document.querySelectorAll('.view').forEach(function(v) { v.style.display = 'none'; });
