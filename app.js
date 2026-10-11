@@ -116,12 +116,15 @@ function renderDash() {
         card.onclick = function() { openSub(m); };
 
         card.innerHTML =
-            '<div style="display: flex; justify-content: space-between; align-items: flex-start;">' +
-                '<h3 style="font-size:1.3rem; margin-bottom:4px;">' + m + '</h3>' +
-                '<button class="delete-btn" title="Elimina corso" onclick="event.stopPropagation(); deleteCourse(\'' + m.replace(/'/g, "\\'") + '\')">🗑️</button>' +
-            '</div>' +
-            '<div class="counter-pill"><span class="counter-dot"></span>' +
-            groupCount + ' Argomenti · ' + totalItems + ' Elementi</div>';
+    '<div style="display: flex; justify-content: space-between; align-items: flex-start;">' +
+        '<h3 style="font-size:1.3rem; margin-bottom:4px;">' + m + '</h3>' +
+        '<div style="display:flex; gap:6px;">' +
+            '<button class="delete-btn" title="Modifica nome corso" onclick="event.stopPropagation(); editCourse(\'' + m.replace(/'/g, "\\'") + '\')">✏️</button>' +
+            '<button class="delete-btn" title="Elimina corso" onclick="event.stopPropagation(); deleteCourse(\'' + m.replace(/'/g, "\\'") + '\')">🗑️</button>' +
+        '</div>' +
+    '</div>' +
+    '<div class="counter-pill"><span class="counter-dot"></span>' +
+    groupCount + ' Argomenti · ' + totalItems + ' Elementi</div>';
 
         g.appendChild(card);
     });
@@ -1307,4 +1310,38 @@ function saveEditedQuestion(oldGName, idx) {
     filterQuestions();
     renderDropdown();
     showToast('Elemento modificato con successo!', 'success');
+}
+
+// ===== MODIFICA NOME CORSO =====
+function editCourse(oldName) {
+    const newName = prompt("Inserisci il nuovo nome per il corso:", oldName);
+    if (!newName) return;
+    const trimmed = newName.trim();
+    if (!trimmed || trimmed === oldName) return;
+
+    if (db[trimmed]) {
+        showToast('Esiste già un corso con questo nome!', 'error');
+        return;
+    }
+
+    // Sposta i dati del corso sotto la nuova chiave
+    db[trimmed] = db[oldName];
+    delete db[oldName];
+
+    // Aggiorna anche i punteggi migliori salvati (scores)
+    const types = ['flashcard', 'quiz', 'esercizio'];
+    types.forEach(function(type) {
+        const oldKey = oldName + '_' + type;
+        const newKey = trimmed + '_' + type;
+        if (scores[oldKey]) {
+            scores[newKey] = scores[oldKey];
+            delete scores[oldKey];
+        }
+    });
+    localStorage.setItem(SCORES_KEY, JSON.stringify(scores));
+
+    // Salva sul file/localStorage e aggiorna la schermata
+    save();
+    renderDash();
+    showToast('Nome del corso modificato con successo!', 'success');
 }
