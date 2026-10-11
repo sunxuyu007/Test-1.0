@@ -414,12 +414,19 @@ function launchSession() {
 
     currentList = [];
     const groups = db[currentS] && db[currentS].groups ? db[currentS].groups : {};
-    selected.forEach(function(g) {
+   selected.forEach(function(g) {
         if (groups[g]) {
             groups[g].forEach(function(item) {
                 if (item.type === currentA) {
-                    // AGGIUNTO image: item.image PER NON PERDERLO DURANTE LA SESSIONE DI STUDIO
-                    currentList.push({ type: item.type, q: item.q, a: item.a, options: item.options, image: item.image, gRef: g });
+                    currentList.push({ 
+                        type: item.type, 
+                        q: item.q, 
+                        a: item.a, 
+                        options: item.options, 
+                        image: item.image, 
+                        answerImage: item.answerImage, 
+                        gRef: g 
+                    });
                 }
             });
         }
@@ -742,6 +749,9 @@ function addManual() {
     const imageInput = document.getElementById('add-image');
     const hasImage = imageInput && imageInput.files && imageInput.files[0];
     
+    const ansImageInput = document.getElementById('add-answer-image');
+    const hasAnsImage = ansImageInput && ansImageInput.files && ansImageInput.files[0];
+    
     if (!q && !hasImage) {
         showToast('Inserisci il testo della domanda o allega un\'immagine', 'error');
         return;
@@ -749,8 +759,8 @@ function addManual() {
     
     let item = { type: type, q: q, enabled: true };
 
-    if (hasImage) {
-        const file = imageInput.files[0];
+    // Funzione di supporto per comprimere e convertire qualsiasi immagine in Base64
+    function processImageFile(file, callback) {
         const reader = new FileReader();
         reader.onload = function(e) {
             const img = new Image();
@@ -758,7 +768,7 @@ function addManual() {
                 const canvas = document.createElement('canvas');
                 let width = img.width;
                 let height = img.height;
-                const maxDim = 800; // Ridimensionamento ottimale per il browser
+                const maxDim = 800;
                 
                 if (width > height && width > maxDim) {
                     height *= maxDim / width;
@@ -772,21 +782,32 @@ function addManual() {
                 canvas.height = height;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
-                
-                // Converte in JPEG compresso (qualità 0.8) leggerissimo per il database
-                item.image = canvas.toDataURL('image/jpeg', 0.8);
-                finishAddManual(item, gName);
+                callback(canvas.toDataURL('image/jpeg', 0.8));
             };
-            img.onerror = function() {
-                item.image = e.target.result;
-                finishAddManual(item, gName);
-            };
+            img.onerror = function() { callback(e.target.result); };
             img.src = e.target.result;
         };
-        reader.onerror = function() {
-            showToast('Errore durante la lettura del file', 'error');
-        };
         reader.readAsDataURL(file);
+    }
+
+    // Gestione concatenata del caricamento delle due immagini
+    if (hasImage) {
+        processImageFile(imageInput.files[0], function(base64Q) {
+            item.image = base64Q;
+            if (hasAnsImage) {
+                processImageFile(ansImageInput.files[0], function(base64A) {
+                    item.answerImage = base64A;
+                    finishAddManual(item, gName);
+                });
+            } else {
+                finishAddManual(item, gName);
+            }
+        });
+    } else if (hasAnsImage) {
+        processImageFile(ansImageInput.files[0], function(base64A) {
+            item.answerImage = base64A;
+            finishAddManual(item, gName);
+        });
     } else {
         finishAddManual(item, gName);
     }
@@ -828,10 +849,11 @@ function finishAddManual(item, gName) {
     if (typeof renderDropdown === 'function') renderDropdown();
     showToast('Elemento aggiunto con successo!', 'success');
     
-    // Pulisci i campi del form
+   // Pulisci i campi del form
     document.getElementById('add-q').value = '';
     if (document.getElementById('add-a')) document.getElementById('add-a').value = '';
     if (document.getElementById('add-image')) document.getElementById('add-image').value = '';
+    if (document.getElementById('add-answer-image')) document.getElementById('add-answer-image').value = '';
 }
 
 function doImport() {
