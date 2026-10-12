@@ -726,17 +726,32 @@ let activeLotties = {
     a: { animation: null, markers: [], idx: 0 }
 };
 
-function getLottieHtml(prefix) {
-   return '<div style="display: flex; flex-direction: column; align-items: center; width: 100%;">' +
-        '<div id="lottie-container-' + prefix + '" style="width: 100%; max-width: 520px; height: 520px; margin: 15px auto; background: rgba(0,0,0,0.4); border-radius: 12px; border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center;"></div>' +
-        '<div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 10px; width: 100%; max-width: 520px;" id="lottie-controls-' + prefix + '">' +
-        '<button class="btn btn-sm btn-ghost" onclick="lottiePrevMarker(\'' + prefix + '\')" style="padding: 10px 18px; border-radius: 10px; font-size: 1.1rem; margin: 0;" title="Fase Precedente">&#9664;</button>' +
-        '<div style="flex: 1; text-align: center; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); padding: 10px; border-radius: 10px;">' +
-        '<span id="lottie-marker-label-' + prefix + '" style="font-size: 0.9rem; font-weight: 600; color: var(--accent);">Fase</span>' +
-        '</div>' +
-        '<button class="btn btn-sm btn-ghost" onclick="lottieNextMarker(\'' + prefix + '\')" style="padding: 10px 18px; border-radius: 10px; font-size: 1.1rem; margin: 0;" title="Fase Successiva">&#9654;</button>' +
-        '</div>' +
-        '</div>';
+function getLottieHtml(prefix, isFlashcard) {
+    if (isFlashcard) {
+        // Frecce ai lati per le flashcard con blocco del click (evita il flip della carta)
+        return '<div style="display: flex; flex-direction: column; align-items: center; width: 100%;" onclick="event.stopPropagation();">' +
+            '<div style="display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; max-width: 520px; margin: 10px auto;">' +
+            '<button class="btn btn-sm btn-ghost" onclick="event.stopPropagation(); lottiePrevMarker(\'' + prefix + '\')" style="padding: 12px 10px; border-radius: 10px; font-size: 1rem; margin: 0; flex-shrink: 0;" title="Fase Precedente">&#9664;</button>' +
+            '<div id="lottie-container-' + prefix + '" style="width: 100%; max-width: 340px; height: 300px; background: rgba(0,0,0,0.4); border-radius: 12px; border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; flex: 1;"></div>' +
+            '<button class="btn btn-sm btn-ghost" onclick="event.stopPropagation(); lottieNextMarker(\'' + prefix + '\')" style="padding: 12px 10px; border-radius: 10px; font-size: 1rem; margin: 0; flex-shrink: 0;" title="Fase Successiva">&#9654;</button>' +
+            '</div>' +
+            '<div style="text-align: center; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); padding: 4px 12px; border-radius: 8px; margin-bottom: 8px;">' +
+            '<span id="lottie-marker-label-' + prefix + '" style="font-size: 0.8rem; font-weight: 600; color: var(--accent);">Fase</span>' +
+            '</div>' +
+            '</div>';
+    } else {
+        // Layout con frecce sotto per gli esercizi (come preferivi)
+        return '<div style="display: flex; flex-direction: column; align-items: center; width: 100%;">' +
+            '<div id="lottie-container-' + prefix + '" style="width: 100%; max-width: 520px; height: 520px; margin: 15px auto; background: rgba(0,0,0,0.4); border-radius: 12px; border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center;"></div>' +
+            '<div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 10px; width: 100%; max-width: 520px;" id="lottie-controls-' + prefix + '">' +
+            '<button class="btn btn-sm btn-ghost" onclick="lottiePrevMarker(\'' + prefix + '\')" style="padding: 10px 18px; border-radius: 10px; font-size: 1.1rem; margin: 0;" title="Fase Precedente">&#9664;</button>' +
+            '<div style="flex: 1; text-align: center; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); padding: 10px; border-radius: 10px;">' +
+            '<span id="lottie-marker-label-' + prefix + '" style="font-size: 0.9rem; font-weight: 600; color: var(--accent);">Fase</span>' +
+            '</div>' +
+            '<button class="btn btn-sm btn-ghost" onclick="lottieNextMarker(\'' + prefix + '\')" style="padding: 10px 18px; border-radius: 10px; font-size: 1.1rem; margin: 0;" title="Fase Successiva">&#9654;</button>' +
+            '</div>' +
+            '</div>';
+    }
 }
 
 function renderLottieAnimation(prefix, containerId, jsonAnimationData) {
@@ -1891,12 +1906,12 @@ function clearAllImages(type) {
     showToast('Tutte le immagini rimosse', 'info');
 }
 
-function getImagesHtml(imagesArray, singleImage) {
+function getImagesHtml(imagesArray, singleImage, maxHeight = 320) {
     let html = '';
     const list = imagesArray && imagesArray.length > 0 ? imagesArray : (singleImage ? [singleImage] : []);
     list.forEach(src => {
-        html += '<div style="margin: 15px 0; text-align: center; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 12px; border: 1px solid var(--glass-border);">' +
-                '<img src="' + src + '" style="max-width: 100%; max-height: 320px; border-radius: 8px; object-fit: contain; display: block; margin: 0 auto;" alt="Immagine">' +
+        html += '<div style="margin: 10px 0; text-align: center; background: rgba(0,0,0,0.4); padding: 8px; border-radius: 10px; border: 1px solid var(--glass-border);">' +
+                '<img src="' + src + '" style="max-width: 100%; max-height: ' + maxHeight + 'px; border-radius: 8px; object-fit: contain; display: block; margin: 0 auto;" alt="Immagine">' +
                 '</div>';
     });
     return html;
