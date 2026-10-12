@@ -215,14 +215,15 @@
                 <div id="preview-container-q" style="display: none; gap: 8px; flex-wrap: wrap; margin-top: 10px;"></div>
             </div>
             <div style="margin-top: 15px; margin-bottom: 15px;">
-    <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Animazione Lottie Domanda (.json opzionale):</label>
+    <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Animazione Lottie Domanda (.json opzionali):</label>
     <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 10px 16px; background: rgba(15,23,42,0.9); border: 1px solid var(--glass-border); border-radius: 12px; color: var(--text-main);">
         <label style="cursor: pointer; display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 0;">
             🎬 <span id="file-text-lottie-q" style="opacity: 0.85; font-size: 0.9rem;">Scegli JSON domanda...</span>
-            <input type="file" id="add-lottie-file-q" accept=".json" style="display: none;" onchange="handleLottieSelection(this, 'q', 'add')">
+            <input type="file" id="add-lottie-file-q" accept=".json" multiple style="display: none;" onchange="handleLottieSelection(this, 'q', 'add')">
         </label>
-        <button type="button" onclick="clearLottieFile('q', 'add')" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; cursor: pointer; font-size: 0.8rem; padding: 6px 10px; border-radius: 8px;" title="Rimuovi">Rimuovi</button>
+        <button type="button" onclick="clearAllLotties('q', 'add')" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; cursor: pointer; font-size: 0.8rem; padding: 6px 10px; border-radius: 8px;" title="Rimuovi tutte">Rimuovi tutte</button>
     </div>
+    <div id="preview-container-lottie-q" style="display: none; gap: 8px; flex-direction: column; margin-top: 10px;"></div>
 </div>
             
             <textarea id="add-a" placeholder="Risposta o Svolgimento completo..." rows="3" style="margin-bottom: 14px;"></textarea>
@@ -240,14 +241,15 @@
             </div>
 
             <div style="margin-top: 15px; margin-bottom: 15px;">
-    <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Animazione Lottie Risposta / Svolgimento (.json opzionale):</label>
+    <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Animazione Lottie Risposta / Svolgimento (.json opzionali):</label>
     <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 10px 16px; background: rgba(15,23,42,0.9); border: 1px solid var(--glass-border); border-radius: 12px; color: var(--text-main);">
         <label style="cursor: pointer; display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 0;">
             🎬 <span id="file-text-lottie-a" style="opacity: 0.85; font-size: 0.9rem;">Scegli JSON risposta...</span>
-            <input type="file" id="add-lottie-file-a" accept=".json" style="display: none;" onchange="handleLottieSelection(this, 'a', 'add')">
+            <input type="file" id="add-lottie-file-a" accept=".json" multiple style="display: none;" onchange="handleLottieSelection(this, 'a', 'add')">
         </label>
-        <button type="button" onclick="clearLottieFile('a', 'add')" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; cursor: pointer; font-size: 0.8rem; padding: 6px 10px; border-radius: 8px;" title="Rimuovi">Rimuovi</button>
+        <button type="button" onclick="clearAllLotties('a', 'add')" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; cursor: pointer; font-size: 0.8rem; padding: 6px 10px; border-radius: 8px;" title="Rimuovi tutte">Rimuovi tutte</button>
     </div>
+    <div id="preview-container-lottie-a" style="display: none; gap: 8px; flex-direction: column; margin-top: 10px;"></div>
 </div>
             
             <div id="quiz-fields" style="display: none; margin-bottom: 15px;">
