@@ -1475,18 +1475,35 @@ function filterQuestions() {
 }
 
 function openEditModal(gName, idx) {
-    const item = db[currentS].groups[gName][idx];
+  const item = db[currentS].groups[gName][idx];
     if (!item) return;
     const isQuiz = item.type === 'quiz';
     
+    // Inizializza gli array temporanei con le immagini esistenti (supporta sia array multipli che immagine singola)
+    editImagesQ = item.images ? [...item.images] : (item.image ? [item.image] : []);
+    editImagesA = item.answerImages ? [...item.answerImages] : (item.answerImage ? [item.answerImage] : []);
+    
     let html = '<div class="modal-overlay" onclick="if(event.target===this)closeModal()">' +
-        '<div class="modal-card">' +
+        '<div class="modal-card" style="max-height: 90vh; overflow-y: auto;">' +
         '<h3>✏️ Modifica Elemento</h3>' +
         '<label style="font-size:0.82rem; color:var(--text-muted); display:block; margin-top:10px;">Sottogruppo</label>' +
         '<input type="text" id="edit-group" value="' + gName.replace(/"/g, '&quot;') + '" placeholder="Sottogruppo">' +
         '<label style="font-size:0.82rem; color:var(--text-muted); display:block; margin-top:10px;">Testo Domanda</label>' +
         '<textarea id="edit-q" rows="3" placeholder="Domanda...">' + (item.q || '').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</textarea>';
     
+    // Sezione Immagini Domanda nella Modale di Modifica
+    html += '<div style="margin-top: 15px;">' +
+        '<label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Immagini Domanda:</label>' +
+        '<div style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 10px 16px; background: rgba(15,23,42,0.9); border: 1px solid var(--glass-border); border-radius: 12px; color: var(--text-main);">' +
+        '<label style="cursor: pointer; display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 0;">' +
+        '📷 <span id="file-text-edit-q" style="opacity: 0.85; font-size: 0.9rem;">Gestisci immagini...</span>' +
+        '<input type="file" id="edit-image" accept="image/png, image/jpeg, image/webp, image/gif" multiple style="display: none;" onchange="handleEditImageSelection(this, \'q\')">' +
+        '</label>' +
+        '<button type="button" onclick="clearAllEditImages(\'q\')" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; cursor: pointer; font-size: 0.8rem; padding: 6px 10px; border-radius: 8px;" title="Rimuovi tutte">Rimuovi tutte</button>' +
+        '</div>' +
+        '<div id="preview-container-edit-q" style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;"></div>' +
+        '</div>';
+
     if (isQuiz) {
         html += '<label style="font-size:0.82rem; color:var(--text-muted); display:block; margin-top:10px;">Opzioni del Quiz</label><div id="edit-quiz-fields" style="margin-top:6px;">';
         if (item.options) {
@@ -1501,6 +1518,19 @@ function openEditModal(gName, idx) {
     } else {
         html += '<label style="font-size:0.82rem; color:var(--text-muted); display:block; margin-top:10px;">Risposta / Svolgimento</label>' +
             '<textarea id="edit-a" rows="3" placeholder="Risposta...">' + (item.a || '').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</textarea>';
+        
+        // Sezione Immagini Risposta/Svolgimento nella Modale di Modifica
+        html += '<div style="margin-top: 15px;">' +
+            '<label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Immagini Risposta / Svolgimento:</label>' +
+            '<div style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 10px 16px; background: rgba(15,23,42,0.9); border: 1px solid var(--glass-border); border-radius: 12px; color: var(--text-main);">' +
+            '<label style="cursor: pointer; display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 0;">' +
+            '📷 <span id="file-text-edit-a" style="opacity: 0.85; font-size: 0.9rem;">Gestisci immagini...</span>' +
+            '<input type="file" id="edit-answer-image" accept="image/png, image/jpeg, image/webp, image/gif" multiple style="display: none;" onchange="handleEditImageSelection(this, \'a\')">' +
+            '</label>' +
+            '<button type="button" onclick="clearAllEditImages(\'a\')" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; cursor: pointer; font-size: 0.8rem; padding: 6px 10px; border-radius: 8px;" title="Rimuovi tutte">Rimuovi tutte</button>' +
+            '</div>' +
+            '<div id="preview-container-edit-a" style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;"></div>' +
+            '</div>';
     }
 
     html += '<div style="margin-top:24px; display:flex; gap:10px;">' +
@@ -1509,19 +1539,33 @@ function openEditModal(gName, idx) {
         '</div></div>';
 
     document.getElementById('modal-root').innerHTML = html;
+
+    // Renderizza le anteprime iniziali delle immagini esistenti
+    renderEditImagePreviews('q');
+    renderEditImagePreviews('a');
 }
 
 function saveEditedQuestion(oldGName, idx) {
-    const item = db[currentS].groups[oldGName][idx];
+   const item = db[currentS].groups[oldGName][idx];
     const newGName = document.getElementById('edit-group').value.trim() || oldGName;
     const newQ = document.getElementById('edit-q').value.trim();
     
-    if (!newQ) {
-        showToast('Il testo della domanda non può essere vuoto', 'error');
+    if (!newQ && editImagesQ.length === 0) {
+        showToast('Inserisci il testo della domanda o almeno un\'immagine', 'error');
         return;
     }
 
     item.q = newQ;
+
+    // Salva le immagini della domanda modificate
+    if (editImagesQ.length > 0) {
+        item.images = [...editImagesQ];
+        item.image = editImagesQ[0]; // Retrocompatibilità
+    } else {
+        delete item.images;
+        delete item.image;
+    }
+
     if (item.type === 'quiz') {
         const optTexts = document.querySelectorAll('.edit-opt-text');
         const optCorrects = document.querySelectorAll('.edit-opt-correct');
@@ -1536,6 +1580,15 @@ function saveEditedQuestion(oldGName, idx) {
     } else {
         const editA = document.getElementById('edit-a');
         if (editA) item.a = editA.value;
+
+        // Salva le immagini della risposta/svolgimento modificate
+        if (editImagesA.length > 0) {
+            item.answerImages = [...editImagesA];
+            item.answerImage = editImagesA[0]; // Retrocompatibilità
+        } else {
+            delete item.answerImages;
+            delete item.answerImage;
+        }
     }
 
     if (newGName !== oldGName) {
@@ -1550,6 +1603,102 @@ function saveEditedQuestion(oldGName, idx) {
     filterQuestions();
     renderDropdown();
     showToast('Elemento modificato con successo!', 'success');
+}
+
+let editImagesQ = [];
+let editImagesA = [];
+
+function handleEditImageSelection(input, type) {
+    if (!input.files || input.files.length === 0) return;
+    const targetArray = type === 'q' ? editImagesQ : editImagesA;
+    
+    Array.from(input.files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                const maxDim = 600;
+                
+                if (width > height && width > maxDim) {
+                    height *= maxDim / width;
+                    width = maxDim;
+                } else if (height > maxDim) {
+                    width *= maxDim / height;
+                    height = maxDim;
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                const base64Data = canvas.toDataURL('image/jpeg', 0.7);
+                targetArray.push(base64Data);
+                renderEditImagePreviews(type);
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+    input.value = '';
+}
+
+function renderEditImagePreviews(type) {
+    const containerId = type === 'q' ? 'preview-container-edit-q' : 'preview-container-edit-a';
+    const textId = type === 'q' ? 'file-text-edit-q' : 'file-text-edit-a';
+    const container = document.getElementById(containerId);
+    const textEl = document.getElementById(textId);
+    const targetArray = type === 'q' ? editImagesQ : editImagesA;
+
+    if (textEl) {
+        const count = targetArray.length;
+        textEl.innerHTML = count > 0 ? '<strong style="color:var(--success);">' + count + ' ' + (count === 1 ? 'immagine' : 'immagini') + '</strong>' : 'Gestisci immagini...';
+    }
+
+    if (!container) return;
+    if (targetArray.length === 0) {
+        container.innerHTML = '';
+        return;
+    }
+
+    let html = '';
+    targetArray.forEach((src, idx) => {
+        html += '<div style="position: relative; width: 80px; height: 80px; border-radius: 10px; border: 1px solid var(--glass-border); overflow: hidden; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center;">' +
+                '<img src="' + src + '" style="width: 100%; height: 100%; object-fit: cover;">' +
+                '<button type="button" onclick="removeSingleEditImage(\'' + type + '\', ' + idx + ')" style="position: absolute; top: 3px; right: 3px; background: rgba(239, 68, 68, 0.9); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="Rimuovi">✕</button>' +
+                '<div style="position: absolute; bottom: 2px; left: 2px; right: 2px; display: flex; justify-content: space-between; background: rgba(15,23,42,0.85); border-radius: 4px; padding: 1px 3px; align-items: center;">' +
+                (idx > 0 ? '<button type="button" onclick="moveEditImage(\'' + type + '\', ' + idx + ', -1)" style="background:none; border:none; color:white; font-size:10px; cursor:pointer;" title="Sposta">◀</button>' : '<span></span>') +
+                '<span style="font-size:8px; color:var(--text-muted); font-weight:bold;">' + (idx + 1) + '</span>' +
+                (idx < targetArray.length - 1 ? '<button type="button" onclick="moveEditImage(\'' + type + '\', ' + idx + ', 1)" style="background:none; border:none; color:white; font-size:10px; cursor:pointer;" title="Sposta">▶</button>' : '<span></span>') +
+                '</div>' +
+                '</div>';
+    });
+    container.innerHTML = html;
+}
+
+function removeSingleEditImage(type, idx) {
+    if (type === 'q') editImagesQ.splice(idx, 1);
+    else editImagesA.splice(idx, 1);
+    renderEditImagePreviews(type);
+}
+
+function moveEditImage(type, idx, direction) {
+    const targetArray = type === 'q' ? editImagesQ : editImagesA;
+    const newIdx = idx + direction;
+    if (newIdx < 0 || newIdx >= targetArray.length) return;
+    const item = targetArray.splice(idx, 1)[0];
+    targetArray.splice(newIdx, 0, item);
+    renderEditImagePreviews(type);
+}
+
+function clearAllEditImages(type) {
+    if (type === 'q') editImagesQ = [];
+    else editImagesA = [];
+    renderEditImagePreviews(type);
+    showToast('Tutte le immagini rimosse', 'info');
 }
 
 let tempImagesQ = []; 
