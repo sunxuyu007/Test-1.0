@@ -729,10 +729,12 @@ let activeLotties = {
 function getLottieHtml(prefix) {
     return '<div style="display: flex; flex-direction: column; align-items: center; width: 100%;">' +
         '<div id="lottie-container-' + prefix + '" style="width: 100%; max-width: 520px; height: 520px; margin: 15px auto; background: rgba(0,0,0,0.4); border-radius: 12px; border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center;"></div>' +
-        '<div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px;" id="lottie-controls-' + prefix + '">' +
-        '<button class="btn btn-sm btn-ghost" onclick="lottiePrevMarker(\'' + prefix + '\')">&#9664; Indietro</button>' +
+        '<div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 10px; width: 100%; max-width: 520px;" id="lottie-controls-' + prefix + '">' +
+        '<button class="btn btn-sm btn-ghost" onclick="lottiePrevMarker(\'' + prefix + '\')" style="padding: 10px 18px; border-radius: 10px; font-size: 1.1rem; margin: 0;" title="Fase Precedente">&#9664;</button>' +
+        '<div style="flex: 1; text-align: center; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); padding: 10px; border-radius: 10px;">' +
         '<span id="lottie-marker-label-' + prefix + '" style="font-size: 0.9rem; font-weight: 600; color: var(--accent);">Fase</span>' +
-        '<button class="btn btn-sm btn-ghost" onclick="lottieNextMarker(\'' + prefix + '\')">Avanti &#9654;</button>' +
+        '</div>' +
+        '<button class="btn btn-sm btn-ghost" onclick="lottieNextMarker(\'' + prefix + '\')" style="padding: 10px 18px; border-radius: 10px; font-size: 1.1rem; margin: 0;" title="Fase Successiva">&#9654;</button>' +
         '</div>' +
         '</div>';
 }
