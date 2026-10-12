@@ -1625,8 +1625,13 @@ function openEditModal(gName, idx) {
     editImagesQ = item.images ? [...item.images] : (item.image ? [item.image] : []);
     editImagesA = item.answerImages ? [...item.answerImages] : (item.answerImage ? [item.answerImage] : []);
     
-    editLottieDataQ = item.lottieDataQ ? JSON.parse(JSON.stringify(item.lottieDataQ)) : (item.lottieData ? JSON.parse(JSON.stringify(item.lottieData)) : null);
-    editLottieDataA = item.lottieDataA ? JSON.parse(JSON.stringify(item.lottieDataA)) : null;
+    // Gestione Lottie multiple in modifica
+    editLottiesQ = item.lottiesQ ? JSON.parse(JSON.stringify(item.lottiesQ)) : 
+                  (item.lottieDataQ ? [{ name: 'animazione_q.json', data: item.lottieDataQ }] : 
+                  (item.lottieData ? [{ name: 'animazione_q.json', data: item.lottieData }] : []));
+    
+    editLottiesA = item.lottiesA ? JSON.parse(JSON.stringify(item.lottiesA)) : 
+                  (item.lottieDataA ? [{ name: 'animazione_a.json', data: item.lottieDataA }] : []);
     
     let html = '<div class="modal-overlay" onclick="if(event.target===this)closeModal()">' +
         '<div class="modal-card" style="max-height: 90vh; overflow-y: auto;">' +
@@ -1649,14 +1654,15 @@ function openEditModal(gName, idx) {
         '</div>';
 
     html += '<div style="margin-top: 15px;">' +
-        '<label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Animazione Lottie Domanda (.json):</label>' +
+        '<label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Animazioni Lottie Domanda (.json opzionali):</label>' +
         '<div style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 10px 16px; background: rgba(15,23,42,0.9); border: 1px solid var(--glass-border); border-radius: 12px; color: var(--text-main);">' +
         '<label style="cursor: pointer; display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 0;">' +
-        '🎬 <span id="file-text-edit-lottie-q" style="opacity: 0.85; font-size: 0.9rem;">' + (editLottieDataQ ? '<strong style="color:var(--success);">Presente</strong>' : 'Carica JSON...') + '</span>' +
-        '<input type="file" id="edit-lottie-file-q" accept=".json" style="display: none;" onchange="handleLottieSelection(this, \'q\', \'edit\')">' +
+        '🎬 <span id="file-text-edit-lottie-q" style="opacity: 0.85; font-size: 0.9rem;">Gestisci Lottie...</span>' +
+        '<input type="file" id="edit-lottie-file-q" accept=".json" multiple style="display: none;" onchange="handleLottieSelection(this, \'q\', \'edit\')">' +
         '</label>' +
-        '<button type="button" onclick="clearLottieFile(\'q\', \'edit\')" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; cursor: pointer; font-size: 0.8rem; padding: 6px 10px; border-radius: 8px;" title="Rimuovi">Rimuovi</button>' +
+        '<button type="button" onclick="clearAllLotties(\'q\', \'edit\')" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; cursor: pointer; font-size: 0.8rem; padding: 6px 10px; border-radius: 8px;" title="Rimuovi tutte">Rimuovi tutte</button>' +
         '</div>' +
+        '<div id="preview-container-edit-lottie-q" style="display: none; gap: 8px; flex-direction: column; margin-top: 10px;"></div>' +
         '</div>';
 
     if (isQuiz) {
@@ -1687,14 +1693,15 @@ function openEditModal(gName, idx) {
             '</div>';
 
         html += '<div style="margin-top: 15px;">' +
-            '<label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Animazione Lottie Risposta / Svolgimento (.json):</label>' +
+            '<label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Animazioni Lottie Risposta / Svolgimento (.json opzionali):</label>' +
             '<div style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 10px 16px; background: rgba(15,23,42,0.9); border: 1px solid var(--glass-border); border-radius: 12px; color: var(--text-main);">' +
             '<label style="cursor: pointer; display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 0;">' +
-            '🎬 <span id="file-text-edit-lottie-a" style="opacity: 0.85; font-size: 0.9rem;">' + (editLottieDataA ? '<strong style="color:var(--success);">Presente</strong>' : 'Carica JSON...') + '</span>' +
-            '<input type="file" id="edit-lottie-file-a" accept=".json" style="display: none;" onchange="handleLottieSelection(this, \'a\', \'edit\')">' +
+            '🎬 <span id="file-text-edit-lottie-a" style="opacity: 0.85; font-size: 0.9rem;">Gestisci Lottie...</span>' +
+            '<input type="file" id="edit-lottie-file-a" accept=".json" multiple style="display: none;" onchange="handleLottieSelection(this, \'a\', \'edit\')">' +
             '</label>' +
-            '<button type="button" onclick="clearLottieFile(\'a\', \'edit\')" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; cursor: pointer; font-size: 0.8rem; padding: 6px 10px; border-radius: 8px;" title="Rimuovi">Rimuovi</button>' +
+            '<button type="button" onclick="clearAllLotties(\'a\', \'edit\')" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; cursor: pointer; font-size: 0.8rem; padding: 6px 10px; border-radius: 8px;" title="Rimuovi tutte">Rimuovi tutte</button>' +
             '</div>' +
+            '<div id="preview-container-edit-lottie-a" style="display: none; gap: 8px; flex-direction: column; margin-top: 10px;"></div>' +
             '</div>';
     }
 
@@ -1707,6 +1714,8 @@ function openEditModal(gName, idx) {
 
     renderEditImagePreviews('q');
     renderEditImagePreviews('a');
+    renderLottiePreviews('q', 'edit');
+    renderLottiePreviews('a', 'edit');
 }
 
 function saveEditedQuestion(oldGName, idx) {
@@ -1729,12 +1738,24 @@ function saveEditedQuestion(oldGName, idx) {
         delete item.image;
     }
 
-    if (editLottieDataQ !== null) item.lottieDataQ = editLottieDataQ; else delete item.lottieDataQ;
-    if (editLottieDataA !== null) item.lottieDataA = editLottieDataA; else delete item.lottieDataA;
+    // Salvataggio animazioni Lottie multiple in modifica
+    if (editLottiesQ.length > 0) {
+        item.lottiesQ = [...editLottiesQ];
+    } else {
+        delete item.lottiesQ;
+    }
+    delete item.lottieDataQ;
     delete item.lottieData;
 
-    editLottieDataQ = null;
-    editLottieDataA = null;
+    if (editLottiesA.length > 0) {
+        item.lottiesA = [...editLottiesA];
+    } else {
+        delete item.lottiesA;
+    }
+    delete item.lottieDataA;
+
+    editLottiesQ = [];
+    editLottiesA = [];
 
     if (item.type === 'quiz') {
         const optTexts = document.querySelectorAll('.edit-opt-text');
