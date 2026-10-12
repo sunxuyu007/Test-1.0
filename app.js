@@ -1117,70 +1117,60 @@ function submitMultipleQuiz() {
 }
 
 function renderMedia(val) {
-    if (!val) return '';
+   if (!val) return '';
     
-    // Se è un'immagine in formato Base64 (caricata dal PC)
+    // 1. Se è un'immagine in formato Base64 (caricata dal PC)
     if (val.startsWith('data:image')) {
         return '<div style="margin: 15px 0; text-align: center; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 12px; border: 1px solid var(--glass-border);">' +
-               '<img src="' + val + '" style="max-width: 100%; max-height: 350px; border-radius: 8px; object-fit: contain; display: block; margin: 0 auto;" alt="Immagine">' +
+               '<img src="' + val + '" style="max-width: 100%; max-height: 350px; border-radius: 8px; object-fit: contain; display: block; margin: 0 auto;" alt="Immagine" onerror="this.parentElement.style.display=\'none\'">' +
                '</div>';
     }
     
-    // Regex per trovare qualsiasi link di immagine o di anteprima (es. Google/Gstatic)
-    const urlRegex = /(https?:\/\/[^\s]+?\.(?:jpeg|jpg|png|webp|gif)(?:\?[^\s]*)?|https?:\/\/[^\s]+?gstatic\.com\/images[^\s]*|https?:\/\/[^\s]+?\?q=tbn[^\s]*)/gi;
-    
-    let hasLink = false;
-    let processed = val.replace(urlRegex, function(url) {
-        hasLink = true;
+    // 2. Riconoscimento automatico link VIDEO (formati: .mp4, .webm, .ogg, .mov, .m4v)
+    const videoRegex = /(https?:\/\/[^\s]+?\.(?:mp4|webm|ogg|mov|m4v)(?:\?[^\s]*)?)/gi;
+    let processed = val.replace(videoRegex, function(url) {
+        const ext = url.split('.').pop().split('?')[0].toLowerCase();
+        let mimeType = 'video/mp4';
+        if (ext === 'webm') mimeType = 'video/webm';
+        else if (ext === 'ogg' || ext === 'ogv') mimeType = 'video/ogg';
+        else if (ext === 'mov') mimeType = 'video/quicktime';
+        else if (ext === 'm4v') mimeType = 'video/x-m4v';
+
         return '<div style="margin: 15px 0; text-align: center; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 12px; border: 1px solid var(--glass-border);">' +
-               '<img src="' + url + '" style="max-width: 100%; max-height: 350px; border-radius: 8px; object-fit: contain; display: block; margin: 0 auto;" alt="Immagine">' +
+               '<video controls style="max-width: 100%; max-height: 350px; border-radius: 8px; display: block; margin: 0 auto;" onerror="this.parentElement.style.display=\'none\'">' +
+               '<source src="' + url + '" type="' + mimeType + '">' +
+               'Il tuo browser non supporta il tag video.' +
+               '</video>' +
+               '</div>';
+    });
+
+    // 3. Riconoscimento automatico link AUDIO (formati: .mp3, .wav, .m4a, .aac)
+    const audioRegex = /(https?:\/\/[^\s]+?\.(?:mp3|wav|m4a|aac)(?:\?[^\s]*)?)/gi;
+    processed = processed.replace(audioRegex, function(url) {
+        const ext = url.split('.').pop().split('?')[0].toLowerCase();
+        let mimeType = 'audio/mpeg';
+        if (ext === 'wav') mimeType = 'audio/wav';
+        else if (ext === 'm4a') mimeType = 'audio/mp4';
+        else if (ext === 'aac') mimeType = 'audio/aac';
+
+        return '<div style="margin: 15px 0; text-align: center; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 12px; border: 1px solid var(--glass-border);">' +
+               '<audio controls style="width: 100%; max-width: 400px; display: block; margin: 0 auto;" onerror="this.parentElement.style.display=\'none\'">' +
+               '<source src="' + url + '" type="' + mimeType + '">' +
+               'Il tuo browser non supporta il tag audio.' +
+               '</audio>' +
                '</div>';
     });
     
-    // Converte i "a capo" in modo corretto preservando i blocchi immagine
-    return processed.replace(/\n/g, '<br>');
-}
-
-// ===== STATISTICHE =====
-function openStatsView() {
-    const container = document.getElementById('stats-content');
-    if (!container) return;
-
-    const stats = db[currentS] && db[currentS].stats ? db[currentS].stats : {};
-    const types = [
-        { key: 'flashcard', label: '🎴 Flashcards' },
-        { key: 'quiz', label: '📝 Quiz' },
-        { key: 'esercizio', label: '✍️ Esercizi' }
-    ];
-
-    let html = '<h3 style="margin-bottom:20px; font-size:1.2rem; color:var(--text-main);">Riepilogo Medie &mdash; ' + currentS + '</h3>';
-    let hasData = false;
-
-    types.forEach(function(t) {
-        const data = stats[t.key];
-        if (data && data.sessions > 0) {
-            hasData = true;
-            const avgTime = Math.round(data.totalTime / data.sessions);
-            const avgErrors = (data.totalErrors / data.sessions).toFixed(1);
-            const timeBarWidth = Math.min(100, (avgTime / 60) * 20);
-            const errorBarWidth = Math.min(100, avgErrors * 15);
-
-            html += '<div class="stat-card-item">' +
-                '<h4 style="margin-bottom:10px; color:var(--accent); font-size:1.05rem;">' + t.label + ' <span style="font-size:0.8rem; color:var(--text-muted); font-weight:normal;">(Sessioni: ' + data.sessions + ')</span></h4>' +
-                '<div style="font-size:0.85rem; margin-bottom:2px; color:var(--text-main);">⏱️ Tempo Medio: <strong>' + formatTime(avgTime) + '</strong></div>' +
-                '<div class="stat-bar-track"><div class="stat-bar-time" style="width:' + timeBarWidth + '%;"></div></div>' +
-                '<div style="font-size:0.85rem; margin-bottom:2px; color:var(--text-main);">❌ Errori Medi per sessione: <strong>' + avgErrors + '</strong></div>' +
-                '<div class="stat-bar-track"><div class="stat-bar-error" style="width:' + errorBarWidth + '%;"></div></div>' +
-                '</div>';
-        }
+    // 4. Riconoscimento automatico link IMMAGINI e GIF ANIMATE (.jpeg, .jpg, .png, .webp, .gif)
+    const imageRegex = /(https?:\/\/[^\s]+?\.(?:jpeg|jpg|png|webp|gif)(?:\?[^\s]*)?|https?:\/\/[^\s]+?gstatic\.com\/images[^\s]*|https?:\/\/[^\s]+?\?q=tbn[^\s]*)/gi;
+    processed = processed.replace(imageRegex, function(url) {
+        return '<div style="margin: 15px 0; text-align: center; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 12px; border: 1px solid var(--glass-border);">' +
+               '<img src="' + url + '" style="max-width: 100%; max-height: 350px; border-radius: 8px; object-fit: contain; display: block; margin: 0 auto;" alt="Media" onerror="this.parentElement.style.display=\'none\'">' +
+               '</div>';
     });
-
-    if (!hasData) {
-        html += '<p style="text-align:center; color:var(--text-muted); padding:30px;">Nessuna statistica registrata per questo corso.</p>';
-    }
-
-    container.innerHTML = html;
-    showView('view-stats');
+    
+    // 5. Converte i ritorni a capo in <br> preservando i player multimediali
+    return processed.replace(/\n/g, '<br>');
 }
 
 // ===== BACKUP & IMPORT =====
