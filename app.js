@@ -791,10 +791,6 @@ function clearAllLotties(targetType, mode) {
     showToast('Animazioni rimosse', 'info');
 }
 
-let activeLotties = {
-    q: { animation: null, markers: [], idx: 0 },
-    a: { animation: null, markers: [], idx: 0 }
-};
 
 function getLottieHtml(prefix, isFlashcard) {
     if (isFlashcard) {
