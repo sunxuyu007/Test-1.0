@@ -1516,14 +1516,17 @@ let tempImagesA = [];
 
 // ===== GESTIONE FEEDBACK E RIMOZIONE IMMAGINI MANUALI =====
 function handleImageSelection(input, type) {
-    if (!input.files || input.files.length === 0) return;
+   if (!input.files || input.files.length === 0) return;
     const targetArray = type === 'q' ? tempImagesQ : tempImagesA;
     
     Array.from(input.files).forEach(file => {
+        // Verifica se il file è una GIF (controllando sia il mime type che l'estensione)
+        const isGif = file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif');
+        
         const reader = new FileReader();
         reader.onload = function(e) {
-            // Se il file è una GIF, usa direttamente il file originale in Base64 per preservare l'animazione
-            if (file.type === 'image/gif') {
+            // Se è una GIF, usa direttamente il file originale in Base64 preservando l'animazione
+            if (isGif) {
                 targetArray.push(e.target.result);
                 renderImagePreviews(type);
                 return;
