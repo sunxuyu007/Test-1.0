@@ -124,35 +124,15 @@
         <div id="browse-content" style="max-width:700px; margin:0 auto; text-align:left;"></div>
     </div>
 
-    <!-- STUDY VIEW -->
-   <div id="view-study" class="view">
+   <!-- STUDY VIEW -->
+  <!-- STUDY VIEW -->
+    <div id="view-study" class="view">
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:10px;">
             <button class="btn btn-back" onclick="endSession()">&#8592; Esci</button>
             <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
                 <div class="timer-display" id="timer-display" style="display:none;">&#9201; <span id="timer-text">00:00</span></div>
                 <div class="score-display" id="score-display" style="display:none;">🎯 <span id="score-text">0/0</span></div>
             </div>
-        </div>
-        
-        <div class="progress-bar" style="margin-bottom:20px;">
-            <div class="progress-track">
-                <div class="progress-fill" id="progress-fill" style="width:0%;"></div>
-            </div>
-            <span class="progress-text" id="progress-text">0/0</span>
-        </div>
-
-        <!-- Contenitore con frecce laterali e card al centro -->
-        <div style="display: flex; align-items: center; justify-content: center; gap: 16px; width: 100%; max-width: 700px; margin: 0 auto;">
-            <!-- Pulsante Indietro (Lato Sinistro) -->
-            <button class="btn btn-ghost" id="btn-prev" onclick="prevItem()" style="padding: 24px 16px; border-radius: 16px; margin: 0; font-size: 1.2rem;" title="Indietro">&#9664;</button>
-            
-            <!-- Contenitore Centrale della Flashcard / Quiz -->
-            <div style="flex: 1; max-width: 560px;">
-                <div id="study-content"></div>
-            </div>
-            
-            <!-- Pulsante Avanti (Lato Destro) -->
-            <button class="btn" id="btn-next" onclick="nextItem()" style="padding: 24px 16px; border-radius: 16px; margin: 0; font-size: 1.2rem;" title="Avanti">&#9654;</button>
         </div>
 
         <div style="margin-top:20px;" id="study-nav"></div>
