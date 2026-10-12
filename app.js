@@ -1974,10 +1974,11 @@ function lottieFlashNext() {
 function updateFlashLottieLabel() {
     setTimeout(() => {
         const prefix = isFlashcardFlipped() ? 'a' : 'q';
-        const sourceLabel = document.getElementById('lottie-marker-label-' + prefix);
-        const targetLabel = document.getElementById('lottie-marker-label-flash');
-        if (sourceLabel && targetLabel) {
-            targetLabel.innerText = sourceLabel.innerText;
+        const state = activeLotties[prefix];
+        const flashLabel = document.getElementById('lottie-marker-label-flash');
+        if (flashLabel && state.markers && state.markers.length > 0) {
+            const m = state.markers[state.idx];
+            flashLabel.innerText = m.cm + ' (' + (state.idx + 1) + ' di ' + state.markers.length + ')';
         }
     }, 50);
 }
