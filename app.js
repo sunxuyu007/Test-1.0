@@ -1522,12 +1522,20 @@ function handleImageSelection(input, type) {
     Array.from(input.files).forEach(file => {
         const reader = new FileReader();
         reader.onload = function(e) {
+            // Se il file è una GIF, usa direttamente il file originale in Base64 per preservare l'animazione
+            if (file.type === 'image/gif') {
+                targetArray.push(e.target.result);
+                renderImagePreviews(type);
+                return;
+            }
+            
+            // Per gli altri formati (PNG, JPEG, WEBP), applica la compressione tramite Canvas
             const img = new Image();
             img.onload = function() {
                 const canvas = document.createElement('canvas');
                 let width = img.width;
                 let height = img.height;
-                const maxDim = 600; // Ridotto a 600px per alleggerire drasticamente il peso in localStorage
+                const maxDim = 600; 
                 
                 if (width > height && width > maxDim) {
                     height *= maxDim / width;
@@ -1542,7 +1550,6 @@ function handleImageSelection(input, type) {
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
                 
-                // Qualità ridotta al 70% per garantire che la stringa Base64 sia leggera e non corrompa il localStorage
                 const base64Data = canvas.toDataURL('image/jpeg', 0.7);
                 targetArray.push(base64Data);
                 renderImagePreviews(type);
