@@ -727,7 +727,7 @@ let activeLotties = {
 };
 
 function getLottieHtml(prefix) {
-    return '<div style="display: flex; flex-direction: column; align-items: center; width: 100%;">' +
+   return '<div style="display: flex; flex-direction: column; align-items: center; width: 100%;">' +
         '<div id="lottie-container-' + prefix + '" style="width: 100%; max-width: 520px; height: 520px; margin: 15px auto; background: rgba(0,0,0,0.4); border-radius: 12px; border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center;"></div>' +
         '<div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 10px; width: 100%; max-width: 520px;" id="lottie-controls-' + prefix + '">' +
         '<button class="btn btn-sm btn-ghost" onclick="lottiePrevMarker(\'' + prefix + '\')" style="padding: 10px 18px; border-radius: 10px; font-size: 1.1rem; margin: 0;" title="Fase Precedente">&#9664;</button>' +
