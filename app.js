@@ -586,16 +586,17 @@ function renderItem() {
 
     // 🟢 Generazione del contenitore per l'animazione Lottie
     let lottieHtml = '';
-if (item.lottieData) {
-    lottieHtml = '<div style="display: flex; flex-direction: column; align-items: center; width: 100%;">' +
-        '<div id="lottie-container" style="width: 100%; max-width: 520px; height: 520px; margin: 15px auto; background: rgba(0,0,0,0.4); border-radius: 12px; border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center;"></div>' +
-        '<div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px;" id="lottie-controls">' +
-        '<button class="btn btn-sm btn-ghost" onclick="lottiePrevMarker()">&#9664; Indietro</button>' +
-        '<span id="lottie-marker-label" style="font-size: 0.9rem; font-weight: 600; color: var(--accent);">Fase</span>' +
-        '<button class="btn btn-sm btn-ghost" onclick="lottieNextMarker()">Avanti &#9654;</button>' +
-        '</div>' +
-        '</div>';
-}
+    if (item.lottieData) {
+        lottieHtml = '<div style="display: flex; flex-direction: column; align-items: center; width: 100%;">' +
+            '<div id="lottie-container" style="width: 100%; max-width: 520px; height: 520px; margin: 15px auto; background: rgba(0,0,0,0.4); border-radius: 12px; border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center;"></div>' +
+            '<div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px;" id="lottie-controls">' +
+            '<button class="btn btn-sm btn-ghost" onclick="lottiePrevMarker()">&#9664; Indietro</button>' +
+            '<span id="lottie-marker-label" style="font-size: 0.9rem; font-weight: 600; color: var(--accent);">Fase</span>' +
+            '<button class="btn btn-sm btn-ghost" onclick="lottieNextMarker()">Avanti &#9654;</button>' +
+            '</div>' +
+            '</div>';
+    }
+
     if (currentA === 'flashcard') {
         container.innerHTML =
             '<div class="study-container" onclick="this.querySelector(\'.flip-inner\').classList.toggle(\'flipped\')">' +
@@ -603,12 +604,12 @@ if (item.lottieData) {
             '<div class="flip-front">' +
             '<span class="badge">' + item.gRef + '</span>' +
             imgHtml +
-            lottieHtml + // Animazione sul fronte della flashcard (se presente)
             (item.q ? '<div style="font-size:1.25rem; line-height:1.6; font-weight:500;">' + renderMedia(item.q) + '</div>' : '') +
             '<span class="flip-hint">🔄 Clicca per girare</span></div>' +
             '<div class="flip-back">' +
             '<span class="badge" style="background:linear-gradient(135deg, var(--success), var(--accent));">RISPOSTA</span>' +
             ansImgHtml +
+            lottieHtml + // 👈 Spostato qui sul RETRO della flashcard
             '<div style="line-height:1.7; font-size:1.05rem;">' + renderMedia(item.a) + '</div>' +
             '<span class="flip-hint">🔄 Clicca per tornare</span></div>' +
             '</div></div>';
@@ -619,10 +620,9 @@ if (item.lottieData) {
             '<span class="badge">' + item.gRef + '</span>' +
             '<h3 style="font-size:1.2rem; margin:10px 0;">Esercizio</h3>' +
             imgHtml +
-            lottieHtml + // Animazione inserita nell'esercizio
             (item.q ? '<p style="font-size:1.05rem; margin-bottom:24px; line-height:1.7; color:var(--text-main);">' + renderMedia(item.q) + '</p>' : '') +
             '<button class="btn btn-success" onclick="revealSolution(this)">Mostra Svolgimento</button>' +
-            '<div id="sol" class="solution-box">' + ansImgHtml + renderMedia(item.a) + '</div>' +
+            '<div id="sol" class="solution-box">' + ansImgHtml + lottieHtml + renderMedia(item.a) + '</div>' + // 👈 Spostato qui dentro lo SVOLGIMENTO
             '</div>';
 
     } else {
@@ -659,7 +659,6 @@ if (item.lottieData) {
             '<span class="badge">' + item.gRef + '</span>' +
             (item.q ? '<h3 style="font-size:1.15rem; margin-bottom:15px; line-height:1.5;">' + renderMedia(item.q) + '</h3>' : '') +
             imgHtml +
-            lottieHtml + // Animazione inserita nel quiz
             optHtml +
             '<button class="btn" id="btn-submit-quiz" onclick="submitMultipleQuiz()" ' + btnState + ' style="margin-top:15px; width:100%;">Conferma Risposta 🎯</button>' +
             '</div>';
@@ -668,10 +667,11 @@ if (item.lottieData) {
     // 🚀 Attiva il rendering LaTeX in tempo reale sulla card appena creata
     renderMathInContainer(container);
 
-    // 🟢 Avvia l'animazione Lottie se l'elemento corrente la possiede
-    if (item.lottieData) {
+    // 🟢 Avvia l'animazione Lottie solo se è una flashcard (perché il retro è subito gestito dal flip). 
+    // Per gli esercizi, l'animazione partirà quando l'utente clicca su "Mostra Svolgimento".
+    if (item.lottieData && currentA === 'flashcard') {
         renderLottieAnimation('lottie-container', item.lottieData);
-    }
+    } 
 }
 
 // ===== GESTIONE ANIMAZIONE LOTTIE =====
@@ -747,6 +747,12 @@ function revealSolution(btn) {
     const sol = document.getElementById('sol');
     if (sol) sol.style.display = 'block';
     if (btn) btn.style.display = 'none';
+
+    // 🟢 Fa partire l'animazione Lottie nel momento esatto in cui si apre lo svolgimento
+    const item = currentList[currentIdx];
+    if (item && item.lottieData) {
+        renderLottieAnimation('lottie-container', item.lottieData);
+    }
 }
 
 function nextItem() {
