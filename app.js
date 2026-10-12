@@ -593,13 +593,13 @@ function renderItem() {
         if (Array.isArray(lottiesArr)) {
             lottiesArr.forEach(l => {
                 if (!l) return;
-                if (l.data) list.push(l.data);
+                if (l.data && typeof l.data === 'object') list.push(l.data);
                 else if (typeof l === 'object' && (l.layers || l.v)) list.push(l);
             });
         }
         if (list.length === 0) {
-            if (fallback1) list.push(fallback1);
-            else if (fallback2) list.push(fallback2);
+            if (fallback1 && typeof fallback1 === 'object') list.push(fallback1);
+            else if (fallback2 && typeof fallback2 === 'object') list.push(fallback2);
         }
         return list;
     }
@@ -1757,6 +1757,13 @@ function handleEditImageSelection(input, type) {
     Array.from(input.files).forEach(file => {
         const reader = new FileReader();
         reader.onload = function(e) {
+            // Preserva le GIF anche in fase di modifica
+            if (file.type === 'image/gif') {
+                targetArray.push(e.target.result);
+                renderEditImagePreviews(type);
+                return;
+            }
+
             const img = new Image();
             img.onload = function() {
                 const canvas = document.createElement('canvas');
@@ -1787,7 +1794,6 @@ function handleEditImageSelection(input, type) {
     });
     input.value = '';
 }
-
 function renderEditImagePreviews(type) {
     const containerId = type === 'q' ? 'preview-container-edit-q' : 'preview-container-edit-a';
     const textId = type === 'q' ? 'file-text-edit-q' : 'file-text-edit-a';
@@ -1853,6 +1859,13 @@ function handleImageSelection(input, type) {
     Array.from(input.files).forEach(file => {
         const reader = new FileReader();
         reader.onload = function(e) {
+            // SE È UNA GIF, SALVALA DIRETTAMENTE SENZA PASSARE DAL CANVAS (per preservare l'animazione)
+            if (file.type === 'image/gif') {
+                targetArray.push(e.target.result);
+                renderImagePreviews(type);
+                return;
+            }
+
             const img = new Image();
             img.onload = function() {
                 const canvas = document.createElement('canvas');
