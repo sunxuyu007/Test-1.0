@@ -587,8 +587,25 @@ function renderItem() {
                      '</div>';
     }
 
-    const lottiesQList = item.lottiesQ && item.lottiesQ.length > 0 ? item.lottiesQ.map(l => l.data) : (item.lottieDataQ ? [item.lottieDataQ] : (item.lottieData ? [item.lottieData] : []));
-    const lottiesAList = item.lottiesA && item.lottiesA.length > 0 ? item.lottiesA.map(l => l.data) : (item.lottieDataA ? [item.lottieDataA] : []);
+    // Funzione di estrazione universale e sicura per le Lottie
+    function extractLotties(lottiesArr, fallback1, fallback2) {
+        let list = [];
+        if (Array.isArray(lottiesArr)) {
+            lottiesArr.forEach(l => {
+                if (!l) return;
+                if (l.data) list.push(l.data);
+                else if (typeof l === 'object' && (l.layers || l.v)) list.push(l);
+            });
+        }
+        if (list.length === 0) {
+            if (fallback1) list.push(fallback1);
+            else if (fallback2) list.push(fallback2);
+        }
+        return list;
+    }
+
+    const lottiesQList = extractLotties(item.lottiesQ, item.lottieDataQ, item.lottieData);
+    const lottiesAList = extractLotties(item.lottiesA, item.lottieDataA, null);
 
     let lottieHtmlQ = '';
     lottiesQList.forEach((data, index) => {
@@ -690,7 +707,8 @@ function renderItem() {
 
     renderMathInContainer(container);
 
-   lottiesQList.forEach((data, index) => {
+    // Carica le Lottie della domanda
+    lottiesQList.forEach((data, index) => {
         renderLottieAnimation('q_' + index, 'lottie-container-q_' + index, data);
     });
 
@@ -703,7 +721,6 @@ function renderItem() {
         }, 50);
     }
 }
-
 let tempLottiesQ = [];
 let tempLottiesA = [];
 let editLottiesQ = [];
