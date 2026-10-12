@@ -2050,8 +2050,16 @@ function updateLottieSegment(prefix) {
         flashLabel.innerText = textDesc;
     }
 
-    state.animation.playSegments([m.tm, m.tm + m.dr], true);
-    state.animation.setLoop(true);
+    // Rimuoviamo eventuali listener precedenti per evitare duplicazioni
+    state.animation.removeEventListener('complete');
+
+    // Riproduce il segmento corrente impostando il loop manuale tramite l'evento complete
+    function playLoopSegment() {
+        state.animation.playSegments([m.tm, m.tm + m.dr], true);
+    }
+
+    state.animation.addEventListener('complete', playLoopSegment);
+    playLoopSegment();
 }
 
 function lottieNextMarker(prefix) {
