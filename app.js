@@ -587,11 +587,21 @@ function renderItem() {
                      '</div>';
     }
 
-   let lottieHtmlQ = item.lottieDataQ ? getLottieHtml('q', isFlash) : '';
-    let lottieHtmlA = item.lottieDataA ? getLottieHtml('a', isFlash) : '';
+    const lottiesQList = item.lottiesQ && item.lottiesQ.length > 0 ? item.lottiesQ.map(l => l.data) : (item.lottieDataQ ? [item.lottieDataQ] : (item.lottieData ? [item.lottieData] : []));
+    const lottiesAList = item.lottiesA && item.lottiesA.length > 0 ? item.lottiesA.map(l => l.data) : (item.lottieDataA ? [item.lottieDataA] : []);
+
+    let lottieHtmlQ = '';
+    lottiesQList.forEach((data, index) => {
+        lottieHtmlQ += getLottieHtml('q_' + index, isFlash);
+    });
+
+    let lottieHtmlA = '';
+    lottiesAList.forEach((data, index) => {
+        lottieHtmlA += getLottieHtml('a_' + index, isFlash);
+    });
 
     if (currentA === 'flashcard') {
-        const hasLottie = item.lottieDataQ || item.lottieDataA;
+        const hasLottie = lottiesQList.length > 0 || lottiesAList.length > 0;
         let lottieOuterControls = '';
         if (hasLottie) {
             lottieOuterControls = '<div style="display: flex; align-items: center; justify-content: center; gap: 15px; width: 100%; margin-bottom: 15px;">' +
@@ -625,7 +635,6 @@ function renderItem() {
         }
 
     } else if (currentA === 'esercizio') {
-        // Immagini ridimensionate a max-height: 220px per gli esercizi
         let exerciseImgHtml = getImagesHtml(item.images, item.image, 220);
         let exerciseAnsImgHtml = getImagesHtml(item.answerImages, item.answerImage, 220);
 
@@ -639,7 +648,7 @@ function renderItem() {
             '<button class="btn btn-success" onclick="revealSolution(this)">Mostra Svolgimento</button>' +
             '<div id="sol" class="solution-box">' + exerciseAnsImgHtml + lottieHtmlA + renderMedia(item.a) + '</div>' +
             '</div>';
-        } else {
+    } else {
         let opts = [];
         if (item.options) {
             for (let i = 0; i < item.options.length; i++) {
@@ -681,65 +690,105 @@ function renderItem() {
 
     renderMathInContainer(container);
 
-   // Carica Lottie della domanda
-    if (item.lottieDataQ) {
-        renderLottieAnimation('q', 'lottie-container-q', item.lottieDataQ);
-    }
+    lottiesQList.forEach((data, index) => {
+        renderLottieAnimation('q_' + index, 'lottie-container-q_' + index, data);
+    });
 
-    // Carica Lottie della risposta (retro della flashcard) con un piccolo ritardo per consentire il rendering del DOM
-    if (item.lottieDataA) {
+    if (lottiesAList.length > 0) {
         setTimeout(function() {
-            renderLottieAnimation('a', 'lottie-container-a', item.lottieDataA);
+            lottiesAList.forEach((data, index) => {
+                renderLottieAnimation('a_' + index, 'lottie-container-a_' + index, data);
+            });
         }, 50);
     }
 }
 
-let tempLottieDataQ = null;
-let tempLottieDataA = null;
-let editLottieDataQ = null;
-let editLottieDataA = null;
+let tempLottiesQ = [];
+let tempLottiesA = [];
+let editLottiesQ = [];
+let editLottiesA = [];
 
 function handleLottieSelection(input, targetType, mode) {
-    const file = input.files[0];
-    if (!file) return;
+    if (!input.files || input.files.length === 0) return;
+    const targetArray = mode === 'add' ? (targetType === 'q' ? tempLottiesQ : tempLottiesA) : (targetType === 'q' ? editLottiesQ : editLottiesA);
     
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const json = JSON.parse(e.target.result);
-            if (mode === 'add') {
-                if (targetType === 'q') tempLottieDataQ = json;
-                else tempLottieDataA = json;
-                const textEl = document.getElementById(targetType === 'q' ? 'file-text-lottie-q' : 'file-text-lottie-a');
-                if (textEl) textEl.innerHTML = '<strong style="color:var(--success);">Caricato (' + file.name + ')</strong>';
-            } else {
-                if (targetType === 'q') editLottieDataQ = json;
-                else editLottieDataA = json;
-                const textEl = document.getElementById(targetType === 'q' ? 'file-text-edit-lottie-q' : 'file-text-edit-lottie-a');
-                if (textEl) textEl.innerHTML = '<strong style="color:var(--success);">Caricato (' + file.name + ')</strong>';
+    Array.from(input.files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const json = JSON.parse(e.target.result);
+                targetArray.push({ name: file.name, data: json });
+                renderLottiePreviews(targetType, mode);
+                showToast('Animazione "' + file.name + '" caricata!', 'success');
+            } catch (err) {
+                showToast('File JSON "' + file.name + '" non valido', 'error');
             }
-            showToast('Animazione Lottie caricata con successo!', 'success');
-        } catch (err) {
-            showToast('File JSON non valido o corrotto', 'error');
-        }
-    };
-    reader.readAsText(file);
+        };
+        reader.readAsText(file);
+    });
     input.value = '';
 }
 
-function clearLottieFile(targetType, mode) {
-    if (mode === 'add') {
-        if (targetType === 'q') tempLottieDataQ = null;
-        else tempLottieDataA = null;
-        const textEl = document.getElementById(targetType === 'q' ? 'file-text-lottie-q' : 'file-text-lottie-a');
-        if (textEl) textEl.innerText = targetType === 'q' ? 'Scegli JSON domanda...' : 'Scegli JSON risposta...';
-    } else {
-        if (targetType === 'q') editLottieDataQ = null;
-        else editLottieDataA = null;
-        const textEl = document.getElementById(targetType === 'q' ? 'file-text-edit-lottie-q' : 'file-text-edit-lottie-a');
-        if (textEl) textEl.innerText = 'Carica file JSON...';
+function renderLottiePreviews(targetType, mode) {
+    const containerId = mode === 'add' ? (targetType === 'q' ? 'preview-container-lottie-q' : 'preview-container-lottie-a') : (targetType === 'q' ? 'preview-container-edit-lottie-q' : 'preview-container-edit-lottie-a');
+    const textId = mode === 'add' ? (targetType === 'q' ? 'file-text-lottie-q' : 'file-text-lottie-a') : (targetType === 'q' ? 'file-text-edit-lottie-q' : 'file-text-edit-lottie-a');
+    const container = document.getElementById(containerId);
+    const textEl = document.getElementById(textId);
+    const targetArray = mode === 'add' ? (targetType === 'q' ? tempLottiesQ : tempLottiesA) : (targetType === 'q' ? editLottiesQ : editLottiesA);
+
+    if (textEl) {
+        const count = targetArray.length;
+        textEl.innerHTML = count > 0 ? '<strong style="color:var(--success);">' + count + ' ' + (count === 1 ? 'animazione' : 'animazioni') + '</strong>' : (targetType === 'q' ? 'Scegli JSON domanda...' : 'Scegli JSON risposta...');
     }
-    showToast('Animazione Lottie rimossa', 'info');
+
+    if (!container) return;
+    if (targetArray.length === 0) {
+        container.innerHTML = '';
+        container.style.display = 'none';
+        return;
+    }
+    container.style.display = 'flex';
+
+    let html = '';
+    targetArray.forEach((item, idx) => {
+        html += '<div style="position: relative; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(15,23,42,0.8); display: flex; align-items: center; gap: 10px; font-size: 0.85rem;">' +
+                '<span>🎬 <strong>' + item.name + '</strong></span>' +
+                '<div style="display: flex; gap: 6px; margin-left: auto; align-items: center;">' +
+                (idx > 0 ? '<button type="button" onclick="moveLottie(\'' + targetType + '\', \'' + mode + '\', ' + idx + ', -1)" style="background:none; border:none; color:white; font-size:11px; cursor:pointer;" title="Sposta a sinistra">◀</button>' : '') +
+                '<span style="font-size:9px; color:var(--text-muted); font-weight:bold;">' + (idx + 1) + '</span>' +
+                (idx < targetArray.length - 1 ? '<button type="button" onclick="moveLottie(\'' + targetType + '\', \'' + mode + '\', ' + idx + ', 1)" style="background:none; border:none; color:white; font-size:11px; cursor:pointer;" title="Sposta a destra">▶</button>' : '') +
+                '<button type="button" onclick="removeSingleLottie(\'' + targetType + '\', \'' + mode + '\', ' + idx + ')" style="background: rgba(239, 68, 68, 0.9); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-left: 6px;" title="Rimuovi">✕</button>' +
+                '</div>' +
+                '</div>';
+    });
+    container.innerHTML = html;
+}
+
+function removeSingleLottie(targetType, mode, idx) {
+    const targetArray = mode === 'add' ? (targetType === 'q' ? tempLottiesQ : tempLottiesA) : (targetType === 'q' ? editLottiesQ : editLottiesA);
+    targetArray.splice(idx, 1);
+    renderLottiePreviews(targetType, mode);
+}
+
+function moveLottie(targetType, mode, idx, direction) {
+    const targetArray = mode === 'add' ? (targetType === 'q' ? tempLottiesQ : tempLottiesA) : (targetType === 'q' ? editLottiesQ : editLottiesA);
+    const newIdx = idx + direction;
+    if (newIdx < 0 || newIdx >= targetArray.length) return;
+    const item = targetArray.splice(idx, 1)[0];
+    targetArray.splice(newIdx, 0, item);
+    renderLottiePreviews(targetType, mode);
+}
+
+function clearAllLotties(targetType, mode) {
+    if (mode === 'add') {
+        if (targetType === 'q') tempLottiesQ = [];
+        else tempLottiesA = [];
+    } else {
+        if (targetType === 'q') editLottiesQ = [];
+        else editLottiesA = [];
+    }
+    renderLottiePreviews(targetType, mode);
+    showToast('Animazioni rimosse', 'info');
 }
 
 let activeLotties = {
@@ -843,8 +892,11 @@ function revealSolution(btn) {
     if (btn) btn.style.display = 'none';
 
     const item = currentList[currentIdx];
-    if (item && item.lottieDataA) {
-        renderLottieAnimation('a', 'lottie-container-a', item.lottieDataA);
+    if (item) {
+        const lottiesAList = item.lottiesA && item.lottiesA.length > 0 ? item.lottiesA.map(l => l.data) : (item.lottieDataA ? [item.lottieDataA] : []);
+        lottiesAList.forEach((data, index) => {
+            renderLottieAnimation('a_' + index, 'lottie-container-a_' + index, data);
+        });
     }
 }
 
@@ -1031,10 +1083,10 @@ function addManual() {
 function finishAddManual(item, gName) {
     const type = item.type;
     
-    if (tempLottieDataQ) item.lottieDataQ = tempLottieDataQ;
-    if (tempLottieDataA) item.lottieDataA = tempLottieDataA;
-    tempLottieDataQ = null;
-    tempLottieDataA = null;
+    if (tempLottiesQ.length > 0) item.lottiesQ = tempLottiesQ;
+    if (tempLottiesA.length > 0) item.lottiesA = tempLottiesA;
+    tempLottiesQ = [];
+    tempLottiesA = [];
 
     if (type === 'quiz') {
         const optionRows = document.querySelectorAll('.quiz-option-row');
@@ -1075,22 +1127,12 @@ function finishAddManual(item, gName) {
     if (document.getElementById('add-image')) document.getElementById('add-image').value = '';
     if (document.getElementById('add-answer-image')) document.getElementById('add-answer-image').value = '';
 
-    const textQ = document.getElementById('file-text-q');
-    if (textQ) textQ.innerText = 'Scegli immagini...';
-
-    const textA = document.getElementById('file-text-a');
-    if (textA) textA.innerText = 'Scegli immagini...';
-
-    const textLottieQ = document.getElementById('file-text-lottie-q');
-    if (textLottieQ) textLottieQ.innerText = 'Scegli JSON domanda...';
-
-    const textLottieA = document.getElementById('file-text-lottie-a');
-    if (textLottieA) textLottieA.innerText = 'Scegli JSON risposta...';
-
     tempImagesQ = [];
     tempImagesA = [];
     renderImagePreviews('q');
     renderImagePreviews('a');
+    renderLottiePreviews('q', 'add');
+    renderLottiePreviews('a', 'add');
 }
 
 function doImport() {
