@@ -591,36 +591,55 @@ function renderItem() {
     let lottieHtmlA = item.lottieDataA ? getLottieHtml('a', isFlash) : '';
 
     if (currentA === 'flashcard') {
-        container.innerHTML =
-            '<div class="study-container" onclick="this.querySelector(\'.flip-inner\').classList.toggle(\'flipped\')">' +
+        const hasLottie = item.lottieDataQ || item.lottieDataA;
+        let lottieOuterControls = '';
+        if (hasLottie) {
+            lottieOuterControls = '<div style="display: flex; align-items: center; justify-content: center; gap: 15px; width: 100%; margin-bottom: 15px;">' +
+                '<button class="btn btn-sm" onclick="lottieFlashPrev()" style="padding: 10px 16px; font-size: 1.1rem; border-radius: 10px;" title="Fase Precedente">&#9664;</button>' +
+                '<div style="background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); padding: 6px 14px; border-radius: 8px; text-align: center;">' +
+                '<span id="lottie-marker-label-flash" style="font-size: 0.85rem; font-weight: 600; color: var(--accent);">Fase</span>' +
+                '</div>' +
+                '<button class="btn btn-sm" onclick="lottieFlashNext()" style="padding: 10px 16px; font-size: 1.1rem; border-radius: 10px;" title="Fase Successiva">&#9654;</button>' +
+                '</div>';
+        }
+
+        container.innerHTML = lottieOuterControls +
+            '<div class="study-container" onclick="this.querySelector(\'.flip-inner\').classList.toggle(\'flipped\'); updateFlashLottieLabel();">' +
             '<div class="flip-inner">' +
             '<div class="flip-front">' +
             '<span class="badge">' + item.gRef + '</span>' +
             imgHtml +
             lottieHtmlQ +
-            (item.q ? '<div style="font-size:1.25rem; line-height:1.6; font-weight:500;">' + renderMedia(item.q) + '</div>' : '') +
-            '<span class="flip-hint">🔄 Clicca per girare</span></div>' +
+            (item.q ? '<div style="font-size:1.15rem; line-height:1.5; font-weight:500; margin-top:8px;">' + renderMedia(item.q) + '</div>' : '') +
+            '<span class="flip-hint" style="margin-top:12px;">🔄 Clicca ovunque per girare</span></div>' +
             '<div class="flip-back">' +
             '<span class="badge" style="background:linear-gradient(135deg, var(--success), var(--accent));">RISPOSTA</span>' +
             ansImgHtml +
             lottieHtmlA +
-            '<div style="line-height:1.7; font-size:1.05rem;">' + renderMedia(item.a) + '</div>' +
-            '<span class="flip-hint">🔄 Clicca per tornare</span></div>' +
+            '<div style="line-height:1.6; font-size:1rem; margin-top:8px;">' + renderMedia(item.a) + '</div>' +
+            '<span class="flip-hint" style="margin-top:12px;">🔄 Clicca ovunque per tornare</span></div>' +
             '</div></div>';
 
+        if (hasLottie) {
+            updateFlashLottieLabel();
+        }
+
     } else if (currentA === 'esercizio') {
+        // Immagini ridimensionate a max-height: 220px per gli esercizi
+        let exerciseImgHtml = getImagesHtml(item.images, item.image, 220);
+        let exerciseAnsImgHtml = getImagesHtml(item.answerImages, item.answerImage, 220);
+
         container.innerHTML =
             '<div class="exercise-card">' +
             '<span class="badge">' + item.gRef + '</span>' +
             '<h3 style="font-size:1.2rem; margin:10px 0;">Esercizio</h3>' +
-            imgHtml +
+            exerciseImgHtml +
             lottieHtmlQ +
-            (item.q ? '<p style="font-size:1.05rem; margin-bottom:24px; line-height:1.7; color:var(--text-main);">' + renderMedia(item.q) + '</p>' : '') +
+            (item.q ? '<p style="font-size:1.05rem; margin-bottom:20px; line-height:1.6; color:var(--text-main);">' + renderMedia(item.q) + '</p>' : '') +
             '<button class="btn btn-success" onclick="revealSolution(this)">Mostra Svolgimento</button>' +
-            '<div id="sol" class="solution-box">' + ansImgHtml + lottieHtmlA + renderMedia(item.a) + '</div>' +
+            '<div id="sol" class="solution-box">' + exerciseAnsImgHtml + lottieHtmlA + renderMedia(item.a) + '</div>' +
             '</div>';
-
-    } else {
+        } else {
         let opts = [];
         if (item.options) {
             for (let i = 0; i < item.options.length; i++) {
@@ -730,21 +749,14 @@ let activeLotties = {
 
 function getLottieHtml(prefix, isFlashcard) {
     if (isFlashcard) {
-        // Frecce ai lati per le flashcard con blocco del click (evita il flip della carta)
-        return '<div style="display: flex; flex-direction: column; align-items: center; width: 100%;" onclick="event.stopPropagation();">' +
-            '<div style="display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; max-width: 520px; margin: 10px auto;">' +
-            '<button class="btn btn-sm btn-ghost" onclick="event.stopPropagation(); lottiePrevMarker(\'' + prefix + '\')" style="padding: 12px 10px; border-radius: 10px; font-size: 1rem; margin: 0; flex-shrink: 0;" title="Fase Precedente">&#9664;</button>' +
-            '<div id="lottie-container-' + prefix + '" style="width: 100%; max-width: 340px; height: 300px; background: rgba(0,0,0,0.4); border-radius: 12px; border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; flex: 1;"></div>' +
-            '<button class="btn btn-sm btn-ghost" onclick="event.stopPropagation(); lottieNextMarker(\'' + prefix + '\')" style="padding: 12px 10px; border-radius: 10px; font-size: 1rem; margin: 0; flex-shrink: 0;" title="Fase Successiva">&#9654;</button>' +
-            '</div>' +
-            '<div style="text-align: center; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); padding: 4px 12px; border-radius: 8px; margin-bottom: 8px;">' +
-            '<span id="lottie-marker-label-' + prefix + '" style="font-size: 0.8rem; font-weight: 600; color: var(--accent);">Fase</span>' +
-            '</div>' +
+        // Solo il contenitore Lottie all'interno della flashcard (pulito e senza etichette o frecce interne)
+        return '<div style="display: flex; flex-direction: column; align-items: center; width: 100%; margin: 8px 0;">' +
+            '<div id="lottie-container-' + prefix + '" style="width: 100%; max-width: 260px; height: 220px; background: rgba(0,0,0,0.4); border-radius: 12px; border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center;"></div>' +
             '</div>';
     } else {
-        // Layout con frecce sotto per gli esercizi (come preferivi)
+        // Layout con frecce sotto per gli esercizi
         return '<div style="display: flex; flex-direction: column; align-items: center; width: 100%;">' +
-            '<div id="lottie-container-' + prefix + '" style="width: 100%; max-width: 520px; height: 520px; margin: 15px auto; background: rgba(0,0,0,0.4); border-radius: 12px; border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center;"></div>' +
+            '<div id="lottie-container-' + prefix + '" style="width: 100%; max-width: 450px; height: 420px; margin: 15px auto; background: rgba(0,0,0,0.4); border-radius: 12px; border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center;"></div>' +
             '<div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 10px; width: 100%; max-width: 520px;" id="lottie-controls-' + prefix + '">' +
             '<button class="btn btn-sm btn-ghost" onclick="lottiePrevMarker(\'' + prefix + '\')" style="padding: 10px 18px; border-radius: 10px; font-size: 1.1rem; margin: 0;" title="Fase Precedente">&#9664;</button>' +
             '<div style="flex: 1; text-align: center; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); padding: 10px; border-radius: 10px;">' +
@@ -1931,4 +1943,32 @@ function renderMathInContainer(element) {
             throwOnError: false
         });
     }
+}
+
+function isFlashcardFlipped() {
+    const flipInner = document.querySelector('.flip-inner');
+    return flipInner && flipInner.classList.contains('flipped');
+}
+
+function lottieFlashPrev() {
+    const prefix = isFlashcardFlipped() ? 'a' : 'q';
+    lottiePrevMarker(prefix);
+    updateFlashLottieLabel();
+}
+
+function lottieFlashNext() {
+    const prefix = isFlashcardFlipped() ? 'a' : 'q';
+    lottieNextMarker(prefix);
+    updateFlashLottieLabel();
+}
+
+function updateFlashLottieLabel() {
+    setTimeout(() => {
+        const prefix = isFlashcardFlipped() ? 'a' : 'q';
+        const sourceLabel = document.getElementById('lottie-marker-label-' + prefix);
+        const targetLabel = document.getElementById('lottie-marker-label-flash');
+        if (sourceLabel && targetLabel) {
+            targetLabel.innerText = sourceLabel.innerText;
+        }
+    }, 50);
 }
