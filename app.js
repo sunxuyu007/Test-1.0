@@ -803,29 +803,38 @@ function updateLottieSegment(prefix) {
     if (!state.animation || state.markers.length === 0) return;
     const m = state.markers[state.idx];
     
+    const textDesc = m.cm + ' (' + (state.idx + 1) + ' di ' + state.markers.length + ')';
+    
     const labelEl = document.getElementById('lottie-marker-label-' + prefix);
     if (labelEl) {
-        labelEl.innerText = m.cm + ' (' + (state.idx + 1) + ' di ' + state.markers.length + ')';
+        labelEl.innerText = textDesc;
     }
+    
+    // Aggiorna subito anche l'etichetta esterna delle flashcard se presente
+    const flashLabel = document.getElementById('lottie-marker-label-flash');
+    if (flashLabel) {
+        flashLabel.innerText = textDesc;
+    }
+
     state.animation.playSegments([m.tm, m.tm + m.dr], true);
 }
 
 function lottieNextMarker(prefix) {
     const state = activeLotties[prefix];
     if (state.markers.length === 0) return;
-    if (state.idx < state.markers.length - 1) {
-        state.idx++;
-        updateLottieSegment(prefix);
-    }
+    // Passa alla successiva o torna alla prima in loop
+    state.idx = (state.idx + 1) % state.markers.length;
+    updateLottieSegment(prefix);
+    if (currentA === 'flashcard') updateFlashLottieLabel();
 }
 
 function lottiePrevMarker(prefix) {
     const state = activeLotties[prefix];
     if (state.markers.length === 0) return;
-    if (state.idx > 0) {
-        state.idx--;
-        updateLottieSegment(prefix);
-    }
+    // Passa alla precedente o va all'ultima in loop
+    state.idx = (state.idx - 1 + state.markers.length) % state.markers.length;
+    updateLottieSegment(prefix);
+    if (currentA === 'flashcard') updateFlashLottieLabel();
 }
 
 function revealSolution(btn) {
