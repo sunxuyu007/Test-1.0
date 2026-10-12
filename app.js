@@ -570,23 +570,25 @@ function renderItem() {
     
     const item = currentList[currentIdx];
     updateProgress();
+
+    const isFlash = currentA === 'flashcard';
     
-    let imgHtml = getImagesHtml(item.images, item.image);
+    let imgHtml = getImagesHtml(item.images, item.image, isFlash ? 160 : 320);
     if (item.image) {
         imgHtml = '<div style="margin: 15px 0; text-align: center; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 12px; border: 1px solid var(--glass-border);">' +
                   '<img src="' + item.image + '" style="max-width: 100%; max-height: 320px; border-radius: 8px; object-fit: contain; display: block; margin: 0 auto;" alt="Immagine Domanda">' +
                   '</div>';
     }
 
-    let ansImgHtml = getImagesHtml(item.answerImages, item.answerImage);
+    let ansImgHtml = getImagesHtml(item.answerImages, item.answerImage, isFlash ? 160 : 320);
     if (item.answerImage) {
         ansImgHtml = '<div style="margin: 15px 0; text-align: center; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 12px; border: 1px solid var(--glass-border);">' +
                      '<img src="' + item.answerImage + '" style="max-width: 100%; max-height: 320px; border-radius: 8px; object-fit: contain; display: block; margin: 0 auto;" alt="Immagine Risposta">' +
                      '</div>';
     }
 
-    let lottieHtmlQ = item.lottieDataQ ? getLottieHtml('q') : '';
-    let lottieHtmlA = item.lottieDataA ? getLottieHtml('a') : '';
+   let lottieHtmlQ = item.lottieDataQ ? getLottieHtml('q', isFlash) : '';
+    let lottieHtmlA = item.lottieDataA ? getLottieHtml('a', isFlash) : '';
 
     if (currentA === 'flashcard') {
         container.innerHTML =
