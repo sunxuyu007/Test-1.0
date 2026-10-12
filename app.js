@@ -456,7 +456,7 @@ function launchSession() {
         if (groups[g]) {
             groups[g].forEach(function(item) {
                 if (item.type === currentA) {
-                    currentList.push({ 
+                   currentList.push({ 
                         type: item.type, 
                         q: item.q, 
                         a: item.a, 
@@ -465,9 +465,11 @@ function launchSession() {
                         answerImage: item.answerImage, 
                         images: item.images,                 
                         answerImages: item.answerImages,     
+                        lottiesQ: item.lottiesQ, // <--- AGGIUNTO
+                        lottiesA: item.lottiesA, // <--- AGGIUNTO
                         lottieDataQ: item.lottieDataQ || item.lottieData, 
                         lottieDataA: item.lottieDataA,         
-                        gRef: g 
+                        gRef: g
                     });
                 }
             });
