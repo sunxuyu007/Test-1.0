@@ -91,13 +91,9 @@ async function handleLogin() {
     const inputUser = userEl ? userEl.value.trim() : "";
     const inputPass = passEl ? passEl.value : "";
     
-    // Hash SHA-256 preimpostati:
-    // Username di default: "xxxxx" -> 8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918
-    // Password di default: "xxxxx"  -> 03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4
     const correctUserHash = "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918";
     const correctPassHash = "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4";
 
-    // Calcola l'hash di ciò che l'utente ha digitato
     const inputUserHash = await sha256(inputUser);
     const inputPassHash = await sha256(inputPass);
 
@@ -213,8 +209,6 @@ function confirmAddCourse() {
     showToast('Corso aggiunto con successo!', 'success');
 }
 
-// ===== MODIFICA NOME CORSO (MODALE PERSONALIZZATA) =====
-// ===== MODIFICA NOME CORSO (MODALE PERSONALIZZATA) =====
 function editCourse(oldName) {
     let html = '<div class="modal-overlay" onclick="if(event.target===this)closeModal()">' +
         '<div class="modal-card">' +
@@ -255,7 +249,6 @@ function confirmEditCourse(oldName) {
     db[newName] = db[oldName];
     delete db[oldName];
 
-    // Aggiorna anche i record dei punteggi associati
     const types = ['flashcard', 'quiz', 'esercizio'];
     types.forEach(function(type) {
         const oldKey = oldName + '_' + type;
@@ -470,8 +463,9 @@ function launchSession() {
                         options: item.options, 
                         image: item.image, 
                         answerImage: item.answerImage, 
-                        images: item.images,                 // <-- AGGIUNTO: preserva le immagini multiple domanda
-                        answerImages: item.answerImages,     // <-- AGGIUNTO: preserva le immagini multiple risposta
+                        images: item.images,                 
+                        answerImages: item.answerImages,     
+                        lottieData: item.lottieData,         // <-- Preserva i dati dell'animazione
                         gRef: g 
                     });
                 }
@@ -590,6 +584,12 @@ function renderItem() {
                      '</div>';
     }
 
+    // 🟢 Generazione del contenitore per l'animazione Lottie
+    let lottieHtml = '';
+    if (item.lottieData) {
+        lottieHtml = '<div id="lottie-container" style="width: 100%; max-width: 520px; height: 520px; margin: 15px auto; background: rgba(0,0,0,0.4); border-radius: 12px; border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center;"></div>';
+    }
+
     if (currentA === 'flashcard') {
         container.innerHTML =
             '<div class="study-container" onclick="this.querySelector(\'.flip-inner\').classList.toggle(\'flipped\')">' +
@@ -597,6 +597,7 @@ function renderItem() {
             '<div class="flip-front">' +
             '<span class="badge">' + item.gRef + '</span>' +
             imgHtml +
+            lottieHtml + // Animazione sul fronte della flashcard (se presente)
             (item.q ? '<div style="font-size:1.25rem; line-height:1.6; font-weight:500;">' + renderMedia(item.q) + '</div>' : '') +
             '<span class="flip-hint">🔄 Clicca per girare</span></div>' +
             '<div class="flip-back">' +
@@ -612,6 +613,7 @@ function renderItem() {
             '<span class="badge">' + item.gRef + '</span>' +
             '<h3 style="font-size:1.2rem; margin:10px 0;">Esercizio</h3>' +
             imgHtml +
+            lottieHtml + // Animazione inserita nell'esercizio
             (item.q ? '<p style="font-size:1.05rem; margin-bottom:24px; line-height:1.7; color:var(--text-main);">' + renderMedia(item.q) + '</p>' : '') +
             '<button class="btn btn-success" onclick="revealSolution(this)">Mostra Svolgimento</button>' +
             '<div id="sol" class="solution-box">' + ansImgHtml + renderMedia(item.a) + '</div>' +
@@ -651,6 +653,7 @@ function renderItem() {
             '<span class="badge">' + item.gRef + '</span>' +
             (item.q ? '<h3 style="font-size:1.15rem; margin-bottom:15px; line-height:1.5;">' + renderMedia(item.q) + '</h3>' : '') +
             imgHtml +
+            lottieHtml + // Animazione inserita nel quiz
             optHtml +
             '<button class="btn" id="btn-submit-quiz" onclick="submitMultipleQuiz()" ' + btnState + ' style="margin-top:15px; width:100%;">Conferma Risposta 🎯</button>' +
             '</div>';
@@ -658,6 +661,39 @@ function renderItem() {
 
     // 🚀 Attiva il rendering LaTeX in tempo reale sulla card appena creata
     renderMathInContainer(container);
+
+    // 🟢 Avvia l'animazione Lottie se l'elemento corrente la possiede
+    if (item.lottieData) {
+        renderLottieAnimation('lottie-container', item.lottieData);
+    }
+}
+
+// ===== GESTIONE ANIMAZIONE LOTTIE =====
+let currentLottieAnimation = null;
+
+function renderLottieAnimation(containerId, jsonAnimationData, loop = true) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    if (currentLottieAnimation) {
+        currentLottieAnimation.destroy();
+        currentLottieAnimation = null;
+    }
+
+    container.innerHTML = "";
+
+    try {
+        currentLottieAnimation = lottie.loadAnimation({
+            container: container,
+            renderer: 'svg',
+            loop: loop,
+            autoplay: true,
+            animationData: jsonAnimationData
+        });
+    } catch (e) {
+        console.error("Errore nel caricamento dell'animazione Lottie:", e);
+        container.innerHTML = "<p style='color:var(--danger); text-align:center;'>Impossibile caricare l'animazione.</p>";
+    }
 }
 
 function revealSolution(btn) {
@@ -672,7 +708,6 @@ function nextItem() {
         currentIdx++;
         renderItem();
     } else {
-        // Mostra la schermata di riepilogo per QUALSIASI modalità (Quiz, Flashcard, Esercizi)
         showResults();
     }
 }
@@ -688,7 +723,6 @@ function showResults() {
     let sessionErrors = sessionTotal - sessionScore;
     const avgTimePerItem = sessionTotal > 0 ? (elapsed / sessionTotal).toFixed(1) : 0;
 
-    // Salvataggio e aggiornamento statistiche nel database del corso
     if (currentS && currentA) {
         if (!db[currentS]) db[currentS] = { groups: {} };
         if (!db[currentS].stats) db[currentS].stats = {};
@@ -704,7 +738,6 @@ function showResults() {
         save();
     }
 
-    // Recupero metriche storiche aggregate dal database
     const statsData = db[currentS] && db[currentS].stats && db[currentS].stats[currentA] ? db[currentS].stats[currentA] : null;
     const avgSessionTime = statsData ? formatTime(Math.round(statsData.totalTime / statsData.sessions)) : timeStr;
     const avgErrorsVal = statsData && statsData.sessions > 0 ? (statsData.totalErrors / statsData.sessions).toFixed(1) : sessionErrors;
@@ -738,7 +771,6 @@ function showResults() {
                 '<div class="results-detail">Elementi studiati: <strong>' + sessionTotal + '</strong></div>';
     }
 
-    // Dettagli e metriche di tempo ed errori
     html += '<div class="results-detail">⏱️ Tempo totale impiegato: <strong>' + timeStr + '</strong></div>' +
             '<div class="results-detail">⚡ Tempo medio per elemento: <strong>' + avgTimePerItem + ' s</strong></div>';
 
@@ -753,7 +785,6 @@ function showResults() {
         html += '<div class="best-score-badge" style="margin-top:12px;">🏆 NUOVO RECORD DI PUNTEGGIO!</div>';
     }
 
-    // Pulsanti di azione richiesti: Riprova/Conferma ed Esci
     html += '<div style="margin-top:28px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">' +
         '<button class="btn" onclick="openPreset(\'' + currentA + '\')">🔄 Riprova / Conferma</button>' +
         '<button class="btn btn-ghost" onclick="openStatsView()">📊 Statistiche</button>' +
@@ -842,10 +873,10 @@ function addManual() {
     let item = { type: type, q: q, enabled: true };
 
     if (tempImagesQ.length > 0) {
-        item.images = [...tempImagesQ]; // Salva l'array ordinato delle immagini domanda
+        item.images = [...tempImagesQ];
     }
     if (tempImagesA.length > 0) {
-        item.answerImages = [...tempImagesA]; // Salva l'array ordinato delle immagini risposta
+        item.answerImages = [...tempImagesA];
     }
 
     finishAddManual(item, gName);
@@ -892,21 +923,20 @@ function finishAddManual(item, gName) {
     if (document.getElementById('add-image')) document.getElementById('add-image').value = '';
     if (document.getElementById('add-answer-image')) document.getElementById('add-answer-image').value = '';
 
+    const textQ = document.getElementById('file-text-q');
+    const removeQ = document.getElementById('file-remove-q');
+    if (textQ) textQ.innerText = 'Scegli immagine...';
+    if (removeQ) removeQ.style.display = 'none';
 
-const textQ = document.getElementById('file-text-q');
-const removeQ = document.getElementById('file-remove-q');
-if (textQ) textQ.innerText = 'Scegli immagine...';
-if (removeQ) removeQ.style.display = 'none';
-
-const textA = document.getElementById('file-text-a');
-const removeA = document.getElementById('file-remove-a');
-if (textA) textA.innerText = 'Scegli immagine...';
-if (removeA) removeA.style.display = 'none';
+    const textA = document.getElementById('file-text-a');
+    const removeA = document.getElementById('file-remove-a');
+    if (textA) textA.innerText = 'Scegli immagine...';
+    if (removeA) removeA.style.display = 'none';
 
     tempImagesQ = [];
-tempImagesA = [];
-renderImagePreviews('q');
-renderImagePreviews('a');
+    tempImagesA = [];
+    renderImagePreviews('q');
+    renderImagePreviews('a');
 }
 
 function doImport() {
@@ -921,10 +951,8 @@ function doImport() {
         const data = JSON.parse(raw);
         let count = 0;
 
-        // Caso 1: Array di elementi in cui ciascuno specifica "course" e "group"
         if (Array.isArray(data)) {
             data.forEach(function(item) {
-                // Se l'elemento specifica un corso usa quello, altrimenti usa il corso corrente o "Generale"
                 const courseName = (item.course && item.course.trim()) ? item.course.trim() : (currentS || "Generale");
                 const groupName = (item.group && item.group.trim()) ? item.group.trim() : "Generale";
 
@@ -938,7 +966,6 @@ function doImport() {
                     db[courseName].groups[groupName] = [];
                 }
 
-                // Pulizia delle proprietà di servizio prima del salvataggio
                 let cleanItem = { ...item };
                 delete cleanItem.course;
                 delete cleanItem.group;
@@ -948,7 +975,6 @@ function doImport() {
                 count++;
             });
         } 
-        // Caso 2: Struttura a oggetto per corsi (es. { "Analisi 2": { groups: { ... } } })
         else if (typeof data === 'object' && data !== null) {
             for (let courseName in data) {
                 if (!db[courseName]) {
@@ -977,7 +1003,6 @@ function doImport() {
         showToast(count + ' elementi importati e smistati con successo!', 'success');
         if (importArea) importArea.value = '';
         
-        // Torna alla dashboard o aggiorna la vista del corso corrente
         if (currentS && db[currentS]) {
             openSub(currentS);
         } else {
@@ -999,7 +1024,6 @@ if (addTypeSelect) {
     };
 }
 
-// Keyboard shortcuts
 document.addEventListener('keydown', function(e) {
     const studyView = document.getElementById('view-study');
     if (studyView && studyView.style.display === 'block') {
@@ -1014,7 +1038,6 @@ document.addEventListener('keydown', function(e) {
     if (e.code === 'Escape') closeModal();
 });
 
-// ===== POPOLA MENU TENDINA SOTTOGRUPPI =====
 function populateGroupDatalist() {
     const datalist = document.getElementById('group-options');
     if (!datalist) return;
@@ -1028,7 +1051,6 @@ function populateGroupDatalist() {
     });
 }
 
-// ===== GESTIONE OPZIONI DINAMICHE MANUALI =====
 function addQuizOptionRow(text = "", isCorrect = false) {
     const container = document.getElementById('quiz-options-container');
     if (!container) return;
@@ -1117,63 +1139,66 @@ function submitMultipleQuiz() {
 }
 
 function renderMedia(val) {
-   if (!val) return '';
+    if (!val) return '';
     
-    // 1. Se è un'immagine in formato Base64 (caricata dal PC)
     if (val.startsWith('data:image')) {
         return '<div style="margin: 15px 0; text-align: center; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 12px; border: 1px solid var(--glass-border);">' +
-               '<img src="' + val + '" style="max-width: 100%; max-height: 350px; border-radius: 8px; object-fit: contain; display: block; margin: 0 auto;" alt="Immagine" onerror="this.parentElement.style.display=\'none\'">' +
+               '<img src="' + val + '" style="max-width: 100%; max-height: 350px; border-radius: 8px; object-fit: contain; display: block; margin: 0 auto;" alt="Immagine">' +
                '</div>';
     }
     
-    // 2. Riconoscimento automatico link VIDEO (formati: .mp4, .webm, .ogg, .mov, .m4v)
-    const videoRegex = /(https?:\/\/[^\s]+?\.(?:mp4|webm|ogg|mov|m4v)(?:\?[^\s]*)?)/gi;
-    let processed = val.replace(videoRegex, function(url) {
-        const ext = url.split('.').pop().split('?')[0].toLowerCase();
-        let mimeType = 'video/mp4';
-        if (ext === 'webm') mimeType = 'video/webm';
-        else if (ext === 'ogg' || ext === 'ogv') mimeType = 'video/ogg';
-        else if (ext === 'mov') mimeType = 'video/quicktime';
-        else if (ext === 'm4v') mimeType = 'video/x-m4v';
-
+    const urlRegex = /(https?:\/\/[^\s]+?\.(?:jpeg|jpg|png|webp|gif)(?:\?[^\s]*)?|https?:\/\/[^\s]+?gstatic\.com\/images[^\s]*|https?:\/\/[^\s]+?\?q=tbn[^\s]*)/gi;
+    
+    let processed = val.replace(urlRegex, function(url) {
         return '<div style="margin: 15px 0; text-align: center; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 12px; border: 1px solid var(--glass-border);">' +
-               '<video controls style="max-width: 100%; max-height: 350px; border-radius: 8px; display: block; margin: 0 auto;" onerror="this.parentElement.style.display=\'none\'">' +
-               '<source src="' + url + '" type="' + mimeType + '">' +
-               'Il tuo browser non supporta il tag video.' +
-               '</video>' +
-               '</div>';
-    });
-
-    // 3. Riconoscimento automatico link AUDIO (formati: .mp3, .wav, .m4a, .aac)
-    const audioRegex = /(https?:\/\/[^\s]+?\.(?:mp3|wav|m4a|aac)(?:\?[^\s]*)?)/gi;
-    processed = processed.replace(audioRegex, function(url) {
-        const ext = url.split('.').pop().split('?')[0].toLowerCase();
-        let mimeType = 'audio/mpeg';
-        if (ext === 'wav') mimeType = 'audio/wav';
-        else if (ext === 'm4a') mimeType = 'audio/mp4';
-        else if (ext === 'aac') mimeType = 'audio/aac';
-
-        return '<div style="margin: 15px 0; text-align: center; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 12px; border: 1px solid var(--glass-border);">' +
-               '<audio controls style="width: 100%; max-width: 400px; display: block; margin: 0 auto;" onerror="this.parentElement.style.display=\'none\'">' +
-               '<source src="' + url + '" type="' + mimeType + '">' +
-               'Il tuo browser non supporta il tag audio.' +
-               '</audio>' +
+               '<img src="' + url + '" style="max-width: 100%; max-height: 350px; border-radius: 8px; object-fit: contain; display: block; margin: 0 auto;" alt="Immagine">' +
                '</div>';
     });
     
-    // 4. Riconoscimento automatico link IMMAGINI e GIF ANIMATE (.jpeg, .jpg, .png, .webp, .gif)
-    const imageRegex = /(https?:\/\/[^\s]+?\.(?:jpeg|jpg|png|webp|gif)(?:\?[^\s]*)?|https?:\/\/[^\s]+?gstatic\.com\/images[^\s]*|https?:\/\/[^\s]+?\?q=tbn[^\s]*)/gi;
-    processed = processed.replace(imageRegex, function(url) {
-        return '<div style="margin: 15px 0; text-align: center; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 12px; border: 1px solid var(--glass-border);">' +
-               '<img src="' + url + '" style="max-width: 100%; max-height: 350px; border-radius: 8px; object-fit: contain; display: block; margin: 0 auto;" alt="Media" onerror="this.parentElement.style.display=\'none\'">' +
-               '</div>';
-    });
-    
-    // 5. Converte i ritorni a capo in <br> preservando i player multimediali
     return processed.replace(/\n/g, '<br>');
 }
 
-// ===== BACKUP & IMPORT =====
+function openStatsView() {
+    const container = document.getElementById('stats-content');
+    if (!container) return;
+
+    const stats = db[currentS] && db[currentS].stats ? db[currentS].stats : {};
+    const types = [
+        { key: 'flashcard', label: '🎴 Flashcards' },
+        { key: 'quiz', label: '📝 Quiz' },
+        { key: 'esercizio', label: '✍️ Esercizi' }
+    ];
+
+    let html = '<h3 style="margin-bottom:20px; font-size:1.2rem; color:var(--text-main);">Riepilogo Medie &mdash; ' + currentS + '</h3>';
+    let hasData = false;
+
+    types.forEach(function(t) {
+        const data = stats[t.key];
+        if (data && data.sessions > 0) {
+            hasData = true;
+            const avgTime = Math.round(data.totalTime / data.sessions);
+            const avgErrors = (data.totalErrors / data.sessions).toFixed(1);
+            const timeBarWidth = Math.min(100, (avgTime / 60) * 20);
+            const errorBarWidth = Math.min(100, avgErrors * 15);
+
+            html += '<div class="stat-card-item">' +
+                '<h4 style="margin-bottom:10px; color:var(--accent); font-size:1.05rem;">' + t.label + ' <span style="font-size:0.8rem; color:var(--text-muted); font-weight:normal;">(Sessioni: ' + data.sessions + ')</span></h4>' +
+                '<div style="font-size:0.85rem; margin-bottom:2px; color:var(--text-main);">⏱️ Tempo Medio: <strong>' + formatTime(avgTime) + '</strong></div>' +
+                '<div class="stat-bar-track"><div class="stat-bar-time" style="width:' + timeBarWidth + '%;"></div></div>' +
+                '<div style="font-size:0.85rem; margin-bottom:2px; color:var(--text-main);">❌ Errori Medi per sessione: <strong>' + avgErrors + '</strong></div>' +
+                '<div class="stat-bar-track"><div class="stat-bar-error" style="width:' + errorBarWidth + '%;"></div></div>' +
+                '</div>';
+        }
+    });
+
+    if (!hasData) {
+        html += '<p style="text-align:center; color:var(--text-muted); padding:30px;">Nessuna statistica registrata per questo corso.</p>';
+    }
+
+    container.innerHTML = html;
+    showView('view-stats');
+}
+
 function downloadDatabase() {
     try {
         const dataStr = JSON.stringify(db, null, 2);
@@ -1236,7 +1261,6 @@ function importDatabaseFromFile(event) {
     reader.readAsText(file);
 }
 
-// ===== FILTRI E GESTIONE GRUPPI & MODIFICA (UNIFICATO E RIPULITO) =====
 function initSearchFilters() {
     const groupSelect = document.getElementById('filter-group');
     if (!groupSelect) return;
@@ -1397,7 +1421,6 @@ function filterQuestions() {
     container.innerHTML = html;
 }
 
-// ===== MODALE DI MODIFICA DOMANDA =====
 function openEditModal(gName, idx) {
     const item = db[currentS].groups[gName][idx];
     if (!item) return;
@@ -1476,69 +1499,22 @@ function saveEditedQuestion(oldGName, idx) {
     showToast('Elemento modificato con successo!', 'success');
 }
 
-// ===== MODIFICA NOME CORSO =====
-function editCourse(oldName) {
-    const newName = prompt("Inserisci il nuovo nome per il corso:", oldName);
-    if (!newName) return;
-    const trimmed = newName.trim();
-    if (!trimmed || trimmed === oldName) return;
-
-    if (db[trimmed]) {
-        showToast('Esiste già un corso con questo nome!', 'error');
-        return;
-    }
-
-    // Sposta i dati del corso sotto la nuova chiave
-    db[trimmed] = db[oldName];
-    delete db[oldName];
-
-    // Aggiorna anche i punteggi migliori salvati (scores)
-    const types = ['flashcard', 'quiz', 'esercizio'];
-    types.forEach(function(type) {
-        const oldKey = oldName + '_' + type;
-        const newKey = trimmed + '_' + type;
-        if (scores[oldKey]) {
-            scores[newKey] = scores[oldKey];
-            delete scores[oldKey];
-        }
-    });
-    localStorage.setItem(SCORES_KEY, JSON.stringify(scores));
-
-    // Salva sul file/localStorage e aggiorna la schermata
-    save();
-    renderDash();
-    showToast('Nome del corso modificato con successo!', 'success');
-}
-
-// ===== STATO TEMPORANEO IMMAGINI MANUALI =====
 let tempImagesQ = []; 
 let tempImagesA = [];
 
-// ===== GESTIONE FEEDBACK E RIMOZIONE IMMAGINI MANUALI =====
 function handleImageSelection(input, type) {
-   if (!input.files || input.files.length === 0) return;
+    if (!input.files || input.files.length === 0) return;
     const targetArray = type === 'q' ? tempImagesQ : tempImagesA;
     
     Array.from(input.files).forEach(file => {
-        // Verifica se il file è una GIF (controllando sia il mime type che l'estensione)
-        const isGif = file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif');
-        
         const reader = new FileReader();
         reader.onload = function(e) {
-            // Se è una GIF, usa direttamente il file originale in Base64 preservando l'animazione
-            if (isGif) {
-                targetArray.push(e.target.result);
-                renderImagePreviews(type);
-                return;
-            }
-            
-            // Per gli altri formati (PNG, JPEG, WEBP), applica la compressione tramite Canvas
             const img = new Image();
             img.onload = function() {
                 const canvas = document.createElement('canvas');
                 let width = img.width;
                 let height = img.height;
-                const maxDim = 600; 
+                const maxDim = 600;
                 
                 if (width > height && width > maxDim) {
                     height *= maxDim / width;
@@ -1591,9 +1567,7 @@ function renderImagePreviews(type) {
     targetArray.forEach((src, idx) => {
         html += '<div style="position: relative; width: 90px; height: 90px; border-radius: 10px; border: 1px solid var(--glass-border); overflow: hidden; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center;">' +
                 '<img src="' + src + '" style="width: 100%; height: 100%; object-fit: cover;">' +
-                // Tasto rimuovi singola immagine
                 '<button type="button" onclick="removeSingleImage(\'' + type + '\', ' + idx + ')" style="position: absolute; top: 4px; right: 4px; background: rgba(239, 68, 68, 0.9); color: white; border: none; border-radius: 50%; width: 22px; height: 22px; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.3);" title="Rimuovi">✕</button>' +
-                // Barra inferiore per cambiare l'ordine (sposta sinistra / destra)
                 '<div style="position: absolute; bottom: 2px; left: 2px; right: 2px; display: flex; justify-content: space-between; background: rgba(15,23,42,0.85); border-radius: 6px; padding: 2px 4px; align-items: center;">' +
                 (idx > 0 ? '<button type="button" onclick="moveImage(\'' + type + '\', ' + idx + ', -1)" style="background:none; border:none; color:white; font-size:11px; cursor:pointer;" title="Sposta a sinistra">◀</button>' : '<span></span>') +
                 '<span style="font-size:9px; color:var(--text-muted); font-weight:bold;">' + (idx + 1) + '</span>' +
@@ -1604,14 +1578,12 @@ function renderImagePreviews(type) {
     container.innerHTML = html;
 }
 
-// Rimuove una singola immagine dall'array in base all'indice
 function removeSingleImage(type, idx) {
     if (type === 'q') tempImagesQ.splice(idx, 1);
     else tempImagesA.splice(idx, 1);
     renderImagePreviews(type);
 }
 
-// Sposta l'immagine a destra o sinistra per cambiare l'ordine
 function moveImage(type, idx, direction) {
     const targetArray = type === 'q' ? tempImagesQ : tempImagesA;
     const newIdx = idx + direction;
@@ -1621,70 +1593,11 @@ function moveImage(type, idx, direction) {
     renderImagePreviews(type);
 }
 
-// Rimuove tutte le immagini del gruppo
 function clearAllImages(type) {
     if (type === 'q') tempImagesQ = [];
     else tempImagesA = [];
     renderImagePreviews(type);
     showToast('Tutte le immagini rimosse', 'info');
-}
-
-function removeImage(type) {
-    const inputId = type === 'q' ? 'add-image' : 'add-answer-image';
-    const input = document.getElementById(inputId);
-    if (input) input.value = '';
-    
-    const textEl = document.getElementById('file-text-' + type);
-    const removeBtn = document.getElementById('file-remove-' + type);
-    
-    if (textEl) textEl.innerText = 'Scegli immagini...';
-    if (removeBtn) removeBtn.style.display = 'none';
-    showToast('Immagini rimosse', 'info');
-}
-
-function processFiles(files, callback) {
-    if (!files || files.length === 0) {
-        callback([]);
-        return;
-    }
-    const results = [];
-    let processed = 0;
-    
-    Array.from(files).forEach((file, index) => {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const img = new Image();
-            img.onload = function() {
-                const canvas = document.createElement('canvas');
-                let width = img.width;
-                let height = img.height;
-                const maxDim = 800;
-                
-                if (width > height && width > maxDim) {
-                    height *= maxDim / width;
-                    width = maxDim;
-                } else if (height > maxDim) {
-                    width *= maxDim / height;
-                    height = maxDim;
-                }
-                
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-                results[index] = canvas.toDataURL('image/jpeg', 0.8);
-                processed++;
-                if (processed === files.length) callback(results);
-            };
-            img.onerror = function() {
-                results[index] = e.target.result;
-                processed++;
-                if (processed === files.length) callback(results);
-            };
-            img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-    });
 }
 
 function getImagesHtml(imagesArray, singleImage) {
@@ -1698,35 +1611,12 @@ function getImagesHtml(imagesArray, singleImage) {
     return html;
 }
 
-// ===== FORMATTAZIONE TESTO: IMMAGINI + LATEX =====
-function formatText(val) {
-    if (!val) return '';
-    
-    // 1. Gestione immagini Base64 o link (come visto in precedenza)
-    if (val.startsWith('data:image')) {
-        return '<div style="margin: 15px 0; text-align: center; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 12px; border: 1px solid var(--glass-border);">' +
-               '<img src="' + val + '" style="max-width: 100%; max-height: 350px; border-radius: 8px; object-fit: contain; display: block; margin: 0 auto;" alt="Immagine">' +
-               '</div>';
-    }
-    
-    const urlRegex = /(https?:\/\/[^\s]+?\.(?:jpeg|jpg|png|webp|gif)(?:\?[^\s]*)?|https?:\/\/[^\s]+?gstatic\.com\/images[^\s]*|https?:\/\/[^\s]+?\?q=tbn[^\s]*)/gi;
-    
-    let processed = val.replace(urlRegex, function(url) {
-        return '<div style="margin: 15px 0; text-align: center; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 12px; border: 1px solid var(--glass-border);">' +
-               '<img src="' + url + '" style="max-width: 100%; max-height: 350px; border-radius: 8px; object-fit: contain; display: block; margin: 0 auto;" alt="Immagine">' +
-               '</div>';
-    });
-    
-    return processed.replace(/\n/g, '<br>');
-}
-
-// ===== ATTIVA IL RENDER LATEX SU UN ELEMENTO =====
 function renderMathInContainer(element) {
     if (window.renderMathInElement && element) {
         window.renderMathInElement(element, {
             delimiters: [
-                {left: '$$', right: '$$', display: true},   // Formule in blocco (centrate)
-                {left: '$', right: '$', display: false},     // Formule in linea (inline)
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false},
                 {left: '\\(', right: '\\)', display: false},
                 {left: '\\[', right: '\\]', display: true}
             ],
