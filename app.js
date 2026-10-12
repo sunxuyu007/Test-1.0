@@ -586,10 +586,16 @@ function renderItem() {
 
     // 🟢 Generazione del contenitore per l'animazione Lottie
     let lottieHtml = '';
-    if (item.lottieData) {
-        lottieHtml = '<div id="lottie-container" style="width: 100%; max-width: 520px; height: 520px; margin: 15px auto; background: rgba(0,0,0,0.4); border-radius: 12px; border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center;"></div>';
-    }
-
+if (item.lottieData) {
+    lottieHtml = '<div style="display: flex; flex-direction: column; align-items: center; width: 100%;">' +
+        '<div id="lottie-container" style="width: 100%; max-width: 520px; height: 520px; margin: 15px auto; background: rgba(0,0,0,0.4); border-radius: 12px; border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center;"></div>' +
+        '<div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px;" id="lottie-controls">' +
+        '<button class="btn btn-sm btn-ghost" onclick="lottiePrevMarker()">&#9664; Indietro</button>' +
+        '<span id="lottie-marker-label" style="font-size: 0.9rem; font-weight: 600; color: var(--accent);">Fase</span>' +
+        '<button class="btn btn-sm btn-ghost" onclick="lottieNextMarker()">Avanti &#9654;</button>' +
+        '</div>' +
+        '</div>';
+}
     if (currentA === 'flashcard') {
         container.innerHTML =
             '<div class="study-container" onclick="this.querySelector(\'.flip-inner\').classList.toggle(\'flipped\')">' +
@@ -670,8 +676,10 @@ function renderItem() {
 
 // ===== GESTIONE ANIMAZIONE LOTTIE =====
 let currentLottieAnimation = null;
+let lottieMarkers = [];
+let currentMarkerIdx = 0;
 
-function renderLottieAnimation(containerId, jsonAnimationData, loop = true) {
+function renderLottieAnimation(containerId, jsonAnimationData) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
@@ -681,18 +689,57 @@ function renderLottieAnimation(containerId, jsonAnimationData, loop = true) {
     }
 
     container.innerHTML = "";
+    
+    // Estrae automaticamente i marker definiti nel file JSON
+    lottieMarkers = jsonAnimationData.markers || [];
+    currentMarkerIdx = 0;
 
     try {
         currentLottieAnimation = lottie.loadAnimation({
             container: container,
             renderer: 'svg',
-            loop: loop,
-            autoplay: true,
+            loop: false,     // Disattiva il loop continuo
+            autoplay: false, // L'animazione parte controllata dai segmenti
             animationData: jsonAnimationData
         });
+
+        // Avvia la prima fase (marker) se disponibile
+        if (lottieMarkers.length > 0) {
+            updateLottieSegment();
+        }
     } catch (e) {
         console.error("Errore nel caricamento dell'animazione Lottie:", e);
         container.innerHTML = "<p style='color:var(--danger); text-align:center;'>Impossibile caricare l'animazione.</p>";
+    }
+}
+
+function updateLottieSegment() {
+    if (!currentLottieAnimation || lottieMarkers.length === 0) return;
+    const m = lottieMarkers[currentMarkerIdx];
+    
+    // Aggiorna il testo dell'etichetta (es. "E1 (1 di 5)")
+    const labelEl = document.getElementById('lottie-marker-label');
+    if (labelEl) {
+        labelEl.innerText = m.cm + ' (' + (currentMarkerIdx + 1) + ' di ' + lottieMarkers.length + ')';
+    }
+
+    // Riproduce esclusivamente il segmento associato al marker corrente (tm = inizio, dr = durata)
+    currentLottieAnimation.playSegments([m.tm, m.tm + m.dr], true);
+}
+
+function lottieNextMarker() {
+    if (lottieMarkers.length === 0) return;
+    if (currentMarkerIdx < lottieMarkers.length - 1) {
+        currentMarkerIdx++;
+        updateLottieSegment();
+    }
+}
+
+function lottiePrevMarker() {
+    if (lottieMarkers.length === 0) return;
+    if (currentMarkerIdx > 0) {
+        currentMarkerIdx--;
+        updateLottieSegment();
     }
 }
 
