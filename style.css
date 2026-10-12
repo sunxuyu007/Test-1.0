@@ -136,8 +136,24 @@ input::placeholder, textarea::placeholder { color: rgba(148,163,184,0.6); }
 .study-container { perspective: 1200px; margin: 30px auto; width: 100%; max-width: 560px; height: 400px; }
 .flip-inner { position: relative; width: 100%; height: 100%; transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; cursor: pointer; }
 .flipped { transform: rotateY(180deg); }
-.flip-front, .flip-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; border-radius: 32px; border: 1px solid var(--glass-border); background: var(--bg-card); backdrop-filter: blur(20px); overflow-y: auto; }
-.flip-front { box-shadow: 0 0 40px rgba(99,102,241,0.08); }
+.flip-front, .flip-back { 
+    position: absolute; 
+    width: 100%; 
+    height: 100%; 
+    backface-visibility: hidden; 
+    -webkit-backface-visibility: hidden; /* Fondamentale per evitare il glitch 3D sul retro */
+    transform-style: preserve-3d;
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: center; 
+    padding: 40px; 
+    border-radius: 32px; 
+    border: 1px solid var(--glass-border); 
+    background: var(--bg-card); 
+    backdrop-filter: blur(20px); 
+    overflow: hidden; /* Rimuove la scrollbar indesiderata e stabilizza l'animazione */
+}
 .flip-front::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent)); border-radius: 32px 32px 0 0; }
 .flip-back { transform: rotateY(180deg); background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(168,85,247,0.08)); }
 .flip-back::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, var(--secondary), var(--accent), var(--success)); border-radius: 32px 32px 0 0; }
