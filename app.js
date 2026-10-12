@@ -660,8 +660,16 @@ function renderItem() {
 
     renderMathInContainer(container);
 
+   // Carica Lottie della domanda
     if (item.lottieDataQ) {
         renderLottieAnimation('q', 'lottie-container-q', item.lottieDataQ);
+    }
+
+    // Carica Lottie della risposta (retro della flashcard) con un piccolo ritardo per consentire il rendering del DOM
+    if (item.lottieDataA) {
+        setTimeout(function() {
+            renderLottieAnimation('a', 'lottie-container-a', item.lottieDataA);
+        }, 50);
     }
 }
 
