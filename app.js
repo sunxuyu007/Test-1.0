@@ -817,74 +817,10 @@ function getLottieHtml(prefix, isFlashcard) {
     }
 }
 
-function renderLottieAnimation(prefix, containerId, jsonAnimationData) {
-    const container = document.getElementById(containerId);
-    if (!container) return;
 
-    if (activeLotties[prefix].animation) {
-        activeLotties[prefix].animation.destroy();
-        activeLotties[prefix].animation = null;
-    }
 
-    container.innerHTML = "";
-    activeLotties[prefix].markers = jsonAnimationData.markers || [];
-    activeLotties[prefix].idx = 0;
 
-    try {
-        activeLotties[prefix].animation = lottie.loadAnimation({
-            container: container,
-            renderer: 'svg',
-            loop: false,
-            autoplay: false,
-            animationData: jsonAnimationData
-        });
 
-        if (activeLotties[prefix].markers.length > 0) {
-            updateLottieSegment(prefix);
-        }
-    } catch (e) {
-        console.error("Errore Lottie:", e);
-    }
-}
-
-function updateLottieSegment(prefix) {
-    const state = activeLotties[prefix];
-    if (!state.animation || state.markers.length === 0) return;
-    const m = state.markers[state.idx];
-    
-    const textDesc = m.cm + ' (' + (state.idx + 1) + ' di ' + state.markers.length + ')';
-    
-    const labelEl = document.getElementById('lottie-marker-label-' + prefix);
-    if (labelEl) {
-        labelEl.innerText = textDesc;
-    }
-    
-    // Aggiorna subito anche l'etichetta esterna delle flashcard se presente
-    const flashLabel = document.getElementById('lottie-marker-label-flash');
-    if (flashLabel) {
-        flashLabel.innerText = textDesc;
-    }
-
-    state.animation.playSegments([m.tm, m.tm + m.dr], true);
-}
-
-function lottieNextMarker(prefix) {
-    const state = activeLotties[prefix];
-    if (state.markers.length === 0) return;
-    // Passa alla successiva o torna alla prima in loop
-    state.idx = (state.idx + 1) % state.markers.length;
-    updateLottieSegment(prefix);
-    if (currentA === 'flashcard') updateFlashLottieLabel();
-}
-
-function lottiePrevMarker(prefix) {
-    const state = activeLotties[prefix];
-    if (state.markers.length === 0) return;
-    // Passa alla precedente o va all'ultima in loop
-    state.idx = (state.idx - 1 + state.markers.length) % state.markers.length;
-    updateLottieSegment(prefix);
-    if (currentA === 'flashcard') updateFlashLottieLabel();
-}
 
 function revealSolution(btn) {
     const sol = document.getElementById('sol');
@@ -2022,24 +1958,100 @@ function isFlashcardFlipped() {
     return flipInner && flipInner.classList.contains('flipped');
 }
 
+
+let activeLotties = {};
+
+function getActiveLottie(prefix) {
+    if (!activeLotties[prefix]) {
+        activeLotties[prefix] = { animation: null, markers: [], idx: 0 };
+    }
+    return activeLotties[prefix];
+}
+
+function renderLottieAnimation(prefix, containerId, jsonAnimationData) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const state = getActiveLottie(prefix);
+    if (state.animation) {
+        state.animation.destroy();
+        state.animation = null;
+    }
+
+    container.innerHTML = "";
+    state.markers = jsonAnimationData.markers || [];
+    state.idx = 0;
+
+    try {
+        state.animation = lottie.loadAnimation({
+            container: container,
+            renderer: 'svg',
+            loop: false,
+            autoplay: false,
+            animationData: jsonAnimationData
+        });
+
+        if (state.markers.length > 0) {
+            updateLottieSegment(prefix);
+        }
+    } catch (e) {
+        console.error("Errore Lottie:", e);
+    }
+}
+
+function updateLottieSegment(prefix) {
+    const state = getActiveLottie(prefix);
+    if (!state.animation || state.markers.length === 0) return;
+    const m = state.markers[state.idx];
+    
+    const textDesc = m.cm + ' (' + (state.idx + 1) + ' di ' + state.markers.length + ')';
+    
+    const labelEl = document.getElementById('lottie-marker-label-' + prefix);
+    if (labelEl) {
+        labelEl.innerText = textDesc;
+    }
+    
+    const flashLabel = document.getElementById('lottie-marker-label-flash');
+    if (flashLabel) {
+        flashLabel.innerText = textDesc;
+    }
+
+    state.animation.playSegments([m.tm, m.tm + m.dr], true);
+}
+
+function lottieNextMarker(prefix) {
+    const state = getActiveLottie(prefix);
+    if (state.markers.length === 0) return;
+    state.idx = (state.idx + 1) % state.markers.length;
+    updateLottieSegment(prefix);
+    if (currentA === 'flashcard') updateFlashLottieLabel();
+}
+
+function lottiePrevMarker(prefix) {
+    const state = getActiveLottie(prefix);
+    if (state.markers.length === 0) return;
+    state.idx = (state.idx - 1 + state.markers.length) % state.markers.length;
+    updateLottieSegment(prefix);
+    if (currentA === 'flashcard') updateFlashLottieLabel();
+}
+
 function lottieFlashPrev() {
-    const prefix = isFlashcardFlipped() ? 'a' : 'q';
-    lottiePrevMarker(prefix);
-    updateFlashLottieLabel();
+    const side = isFlashcardFlipped() ? 'a' : 'q';
+    lottiePrevMarker(side + '_0');
 }
 
 function lottieFlashNext() {
-    const prefix = isFlashcardFlipped() ? 'a' : 'q';
-    lottieNextMarker(prefix);
-    updateFlashLottieLabel();
+    const side = isFlashcardFlipped() ? 'a' : 'q';
+    lottieNextMarker(side + '_0');
 }
 
 function updateFlashLottieLabel() {
     setTimeout(() => {
-        const prefix = isFlashcardFlipped() ? 'a' : 'q';
+        const side = isFlashcardFlipped() ? 'a' : 'q';
+        const prefix = side + '_0';
         const state = activeLotties[prefix];
         const flashLabel = document.getElementById('lottie-marker-label-flash');
-        if (flashLabel && state.markers && state.markers.length > 0) {
+        if (flashLabel && state && state.markers && state.markers.length > 0) {
             const m = state.markers[state.idx];
             flashLabel.innerText = m.cm + ' (' + (state.idx + 1) + ' di ' + state.markers.length + ')';
         }
