@@ -2017,13 +2017,16 @@ function renderLottieAnimation(prefix, containerId, jsonAnimationData) {
         state.animation = lottie.loadAnimation({
             container: container,
             renderer: 'svg',
-            loop: false,
+            loop: true,
             autoplay: false,
             animationData: jsonAnimationData
         });
 
         if (state.markers.length > 0) {
             updateLottieSegment(prefix);
+        }else {
+            // Se non ci sono marker, riproduci l'intera animazione in loop
+            state.animation.play();
         }
     } catch (e) {
         console.error("Errore Lottie:", e);
@@ -2048,6 +2051,7 @@ function updateLottieSegment(prefix) {
     }
 
     state.animation.playSegments([m.tm, m.tm + m.dr], true);
+    state.animation.setLoop(true);
 }
 
 function lottieNextMarker(prefix) {
