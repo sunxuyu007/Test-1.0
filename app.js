@@ -690,11 +690,12 @@ function renderItem() {
 
     renderMathInContainer(container);
 
-    lottiesQList.forEach((data, index) => {
+   lottiesQList.forEach((data, index) => {
         renderLottieAnimation('q_' + index, 'lottie-container-q_' + index, data);
     });
 
-    if (lottiesAList.length > 0) {
+    // Carica le Lottie della risposta subito SOLO se è una Flashcard
+    if (isFlash && lottiesAList.length > 0) {
         setTimeout(function() {
             lottiesAList.forEach((data, index) => {
                 renderLottieAnimation('a_' + index, 'lottie-container-a_' + index, data);
@@ -826,9 +827,11 @@ function revealSolution(btn) {
     const item = currentList[currentIdx];
     if (item) {
         const lottiesAList = item.lottiesA && item.lottiesA.length > 0 ? item.lottiesA.map(l => l.data) : (item.lottieDataA ? [item.lottieDataA] : []);
-        lottiesAList.forEach((data, index) => {
-            renderLottieAnimation('a_' + index, 'lottie-container-a_' + index, data);
-        });
+        setTimeout(function() {
+            lottiesAList.forEach((data, index) => {
+                renderLottieAnimation('a_' + index, 'lottie-container-a_' + index, data);
+            });
+        }, 50);
     }
 }
 
