@@ -465,7 +465,8 @@ function launchSession() {
                         answerImage: item.answerImage, 
                         images: item.images,                 
                         answerImages: item.answerImages,     
-                        lottieData: item.lottieData,         // <-- Preserva i dati dell'animazione
+                        lottieDataQ: item.lottieDataQ || item.lottieData, 
+                        lottieDataA: item.lottieDataA,         
                         gRef: g 
                     });
                 }
@@ -584,18 +585,8 @@ function renderItem() {
                      '</div>';
     }
 
-    // 🟢 Generazione del contenitore per l'animazione Lottie
-    let lottieHtml = '';
-    if (item.lottieData) {
-        lottieHtml = '<div style="display: flex; flex-direction: column; align-items: center; width: 100%;">' +
-            '<div id="lottie-container" style="width: 100%; max-width: 520px; height: 520px; margin: 15px auto; background: rgba(0,0,0,0.4); border-radius: 12px; border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center;"></div>' +
-            '<div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px;" id="lottie-controls">' +
-            '<button class="btn btn-sm btn-ghost" onclick="lottiePrevMarker()">&#9664; Indietro</button>' +
-            '<span id="lottie-marker-label" style="font-size: 0.9rem; font-weight: 600; color: var(--accent);">Fase</span>' +
-            '<button class="btn btn-sm btn-ghost" onclick="lottieNextMarker()">Avanti &#9654;</button>' +
-            '</div>' +
-            '</div>';
-    }
+    let lottieHtmlQ = item.lottieDataQ ? getLottieHtml('q') : '';
+    let lottieHtmlA = item.lottieDataA ? getLottieHtml('a') : '';
 
     if (currentA === 'flashcard') {
         container.innerHTML =
@@ -604,12 +595,13 @@ function renderItem() {
             '<div class="flip-front">' +
             '<span class="badge">' + item.gRef + '</span>' +
             imgHtml +
+            lottieHtmlQ +
             (item.q ? '<div style="font-size:1.25rem; line-height:1.6; font-weight:500;">' + renderMedia(item.q) + '</div>' : '') +
             '<span class="flip-hint">🔄 Clicca per girare</span></div>' +
             '<div class="flip-back">' +
             '<span class="badge" style="background:linear-gradient(135deg, var(--success), var(--accent));">RISPOSTA</span>' +
             ansImgHtml +
-            lottieHtml + // 👈 Spostato qui sul RETRO della flashcard
+            lottieHtmlA +
             '<div style="line-height:1.7; font-size:1.05rem;">' + renderMedia(item.a) + '</div>' +
             '<span class="flip-hint">🔄 Clicca per tornare</span></div>' +
             '</div></div>';
@@ -620,9 +612,10 @@ function renderItem() {
             '<span class="badge">' + item.gRef + '</span>' +
             '<h3 style="font-size:1.2rem; margin:10px 0;">Esercizio</h3>' +
             imgHtml +
+            lottieHtmlQ +
             (item.q ? '<p style="font-size:1.05rem; margin-bottom:24px; line-height:1.7; color:var(--text-main);">' + renderMedia(item.q) + '</p>' : '') +
             '<button class="btn btn-success" onclick="revealSolution(this)">Mostra Svolgimento</button>' +
-            '<div id="sol" class="solution-box">' + ansImgHtml + lottieHtml + renderMedia(item.a) + '</div>' + // 👈 Spostato qui dentro lo SVOLGIMENTO
+            '<div id="sol" class="solution-box">' + ansImgHtml + lottieHtmlA + renderMedia(item.a) + '</div>' +
             '</div>';
 
     } else {
@@ -659,87 +652,140 @@ function renderItem() {
             '<span class="badge">' + item.gRef + '</span>' +
             (item.q ? '<h3 style="font-size:1.15rem; margin-bottom:15px; line-height:1.5;">' + renderMedia(item.q) + '</h3>' : '') +
             imgHtml +
+            lottieHtmlQ +
             optHtml +
             '<button class="btn" id="btn-submit-quiz" onclick="submitMultipleQuiz()" ' + btnState + ' style="margin-top:15px; width:100%;">Conferma Risposta 🎯</button>' +
             '</div>';
     }
 
-    // 🚀 Attiva il rendering LaTeX in tempo reale sulla card appena creata
     renderMathInContainer(container);
 
-    // 🟢 Avvia l'animazione Lottie solo se è una flashcard (perché il retro è subito gestito dal flip). 
-    // Per gli esercizi, l'animazione partirà quando l'utente clicca su "Mostra Svolgimento".
-    if (item.lottieData && currentA === 'flashcard') {
-        renderLottieAnimation('lottie-container', item.lottieData);
-    } 
+    if (item.lottieDataQ) {
+        renderLottieAnimation('q', 'lottie-container-q', item.lottieDataQ);
+    }
 }
 
-// ===== GESTIONE ANIMAZIONE LOTTIE =====
-let currentLottieAnimation = null;
-let lottieMarkers = [];
-let currentMarkerIdx = 0;
+let tempLottieDataQ = null;
+let tempLottieDataA = null;
+let editLottieDataQ = null;
+let editLottieDataA = null;
 
-function renderLottieAnimation(containerId, jsonAnimationData) {
+function handleLottieSelection(input, targetType, mode) {
+    const file = input.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const json = JSON.parse(e.target.result);
+            if (mode === 'add') {
+                if (targetType === 'q') tempLottieDataQ = json;
+                else tempLottieDataA = json;
+                const textEl = document.getElementById(targetType === 'q' ? 'file-text-lottie-q' : 'file-text-lottie-a');
+                if (textEl) textEl.innerHTML = '<strong style="color:var(--success);">Caricato (' + file.name + ')</strong>';
+            } else {
+                if (targetType === 'q') editLottieDataQ = json;
+                else editLottieDataA = json;
+                const textEl = document.getElementById(targetType === 'q' ? 'file-text-edit-lottie-q' : 'file-text-edit-lottie-a');
+                if (textEl) textEl.innerHTML = '<strong style="color:var(--success);">Caricato (' + file.name + ')</strong>';
+            }
+            showToast('Animazione Lottie caricata con successo!', 'success');
+        } catch (err) {
+            showToast('File JSON non valido o corrotto', 'error');
+        }
+    };
+    reader.readAsText(file);
+    input.value = '';
+}
+
+function clearLottieFile(targetType, mode) {
+    if (mode === 'add') {
+        if (targetType === 'q') tempLottieDataQ = null;
+        else tempLottieDataA = null;
+        const textEl = document.getElementById(targetType === 'q' ? 'file-text-lottie-q' : 'file-text-lottie-a');
+        if (textEl) textEl.innerText = targetType === 'q' ? 'Scegli JSON domanda...' : 'Scegli JSON risposta...';
+    } else {
+        if (targetType === 'q') editLottieDataQ = null;
+        else editLottieDataA = null;
+        const textEl = document.getElementById(targetType === 'q' ? 'file-text-edit-lottie-q' : 'file-text-edit-lottie-a');
+        if (textEl) textEl.innerText = 'Carica file JSON...';
+    }
+    showToast('Animazione Lottie rimossa', 'info');
+}
+
+let activeLotties = {
+    q: { animation: null, markers: [], idx: 0 },
+    a: { animation: null, markers: [], idx: 0 }
+};
+
+function getLottieHtml(prefix) {
+    return '<div style="display: flex; flex-direction: column; align-items: center; width: 100%;">' +
+        '<div id="lottie-container-' + prefix + '" style="width: 100%; max-width: 520px; height: 520px; margin: 15px auto; background: rgba(0,0,0,0.4); border-radius: 12px; border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center;"></div>' +
+        '<div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px;" id="lottie-controls-' + prefix + '">' +
+        '<button class="btn btn-sm btn-ghost" onclick="lottiePrevMarker(\'' + prefix + '\')">&#9664; Indietro</button>' +
+        '<span id="lottie-marker-label-' + prefix + '" style="font-size: 0.9rem; font-weight: 600; color: var(--accent);">Fase</span>' +
+        '<button class="btn btn-sm btn-ghost" onclick="lottieNextMarker(\'' + prefix + '\')">Avanti &#9654;</button>' +
+        '</div>' +
+        '</div>';
+}
+
+function renderLottieAnimation(prefix, containerId, jsonAnimationData) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
-    if (currentLottieAnimation) {
-        currentLottieAnimation.destroy();
-        currentLottieAnimation = null;
+    if (activeLotties[prefix].animation) {
+        activeLotties[prefix].animation.destroy();
+        activeLotties[prefix].animation = null;
     }
 
     container.innerHTML = "";
-    
-    // Estrae automaticamente i marker definiti nel file JSON
-    lottieMarkers = jsonAnimationData.markers || [];
-    currentMarkerIdx = 0;
+    activeLotties[prefix].markers = jsonAnimationData.markers || [];
+    activeLotties[prefix].idx = 0;
 
     try {
-        currentLottieAnimation = lottie.loadAnimation({
+        activeLotties[prefix].animation = lottie.loadAnimation({
             container: container,
             renderer: 'svg',
-            loop: false,     // Disattiva il loop continuo
-            autoplay: false, // L'animazione parte controllata dai segmenti
+            loop: false,
+            autoplay: false,
             animationData: jsonAnimationData
         });
 
-        // Avvia la prima fase (marker) se disponibile
-        if (lottieMarkers.length > 0) {
-            updateLottieSegment();
+        if (activeLotties[prefix].markers.length > 0) {
+            updateLottieSegment(prefix);
         }
     } catch (e) {
-        console.error("Errore nel caricamento dell'animazione Lottie:", e);
-        container.innerHTML = "<p style='color:var(--danger); text-align:center;'>Impossibile caricare l'animazione.</p>";
+        console.error("Errore Lottie:", e);
     }
 }
 
-function updateLottieSegment() {
-    if (!currentLottieAnimation || lottieMarkers.length === 0) return;
-    const m = lottieMarkers[currentMarkerIdx];
+function updateLottieSegment(prefix) {
+    const state = activeLotties[prefix];
+    if (!state.animation || state.markers.length === 0) return;
+    const m = state.markers[state.idx];
     
-    // Aggiorna il testo dell'etichetta (es. "E1 (1 di 5)")
-    const labelEl = document.getElementById('lottie-marker-label');
+    const labelEl = document.getElementById('lottie-marker-label-' + prefix);
     if (labelEl) {
-        labelEl.innerText = m.cm + ' (' + (currentMarkerIdx + 1) + ' di ' + lottieMarkers.length + ')';
+        labelEl.innerText = m.cm + ' (' + (state.idx + 1) + ' di ' + state.markers.length + ')';
     }
-
-    // Riproduce esclusivamente il segmento associato al marker corrente (tm = inizio, dr = durata)
-    currentLottieAnimation.playSegments([m.tm, m.tm + m.dr], true);
+    state.animation.playSegments([m.tm, m.tm + m.dr], true);
 }
 
-function lottieNextMarker() {
-    if (lottieMarkers.length === 0) return;
-    if (currentMarkerIdx < lottieMarkers.length - 1) {
-        currentMarkerIdx++;
-        updateLottieSegment();
+function lottieNextMarker(prefix) {
+    const state = activeLotties[prefix];
+    if (state.markers.length === 0) return;
+    if (state.idx < state.markers.length - 1) {
+        state.idx++;
+        updateLottieSegment(prefix);
     }
 }
 
-function lottiePrevMarker() {
-    if (lottieMarkers.length === 0) return;
-    if (currentMarkerIdx > 0) {
-        currentMarkerIdx--;
-        updateLottieSegment();
+function lottiePrevMarker(prefix) {
+    const state = activeLotties[prefix];
+    if (state.markers.length === 0) return;
+    if (state.idx > 0) {
+        state.idx--;
+        updateLottieSegment(prefix);
     }
 }
 
@@ -748,10 +794,9 @@ function revealSolution(btn) {
     if (sol) sol.style.display = 'block';
     if (btn) btn.style.display = 'none';
 
-    // 🟢 Fa partire l'animazione Lottie nel momento esatto in cui si apre lo svolgimento
     const item = currentList[currentIdx];
-    if (item && item.lottieData) {
-        renderLottieAnimation('lottie-container', item.lottieData);
+    if (item && item.lottieDataA) {
+        renderLottieAnimation('a', 'lottie-container-a', item.lottieDataA);
     }
 }
 
@@ -937,6 +982,12 @@ function addManual() {
 
 function finishAddManual(item, gName) {
     const type = item.type;
+    
+    if (tempLottieDataQ) item.lottieDataQ = tempLottieDataQ;
+    if (tempLottieDataA) item.lottieDataA = tempLottieDataA;
+    tempLottieDataQ = null;
+    tempLottieDataA = null;
+
     if (type === 'quiz') {
         const optionRows = document.querySelectorAll('.quiz-option-row');
         const options = [];
@@ -977,14 +1028,16 @@ function finishAddManual(item, gName) {
     if (document.getElementById('add-answer-image')) document.getElementById('add-answer-image').value = '';
 
     const textQ = document.getElementById('file-text-q');
-    const removeQ = document.getElementById('file-remove-q');
-    if (textQ) textQ.innerText = 'Scegli immagine...';
-    if (removeQ) removeQ.style.display = 'none';
+    if (textQ) textQ.innerText = 'Scegli immagini...';
 
     const textA = document.getElementById('file-text-a');
-    const removeA = document.getElementById('file-remove-a');
-    if (textA) textA.innerText = 'Scegli immagine...';
-    if (removeA) removeA.style.display = 'none';
+    if (textA) textA.innerText = 'Scegli immagini...';
+
+    const textLottieQ = document.getElementById('file-text-lottie-q');
+    if (textLottieQ) textLottieQ.innerText = 'Scegli JSON domanda...';
+
+    const textLottieA = document.getElementById('file-text-lottie-a');
+    if (textLottieA) textLottieA.innerText = 'Scegli JSON risposta...';
 
     tempImagesQ = [];
     tempImagesA = [];
@@ -1475,13 +1528,15 @@ function filterQuestions() {
 }
 
 function openEditModal(gName, idx) {
-  const item = db[currentS].groups[gName][idx];
+    const item = db[currentS].groups[gName][idx];
     if (!item) return;
     const isQuiz = item.type === 'quiz';
     
-    // Inizializza gli array temporanei con le immagini esistenti (supporta sia array multipli che immagine singola)
     editImagesQ = item.images ? [...item.images] : (item.image ? [item.image] : []);
     editImagesA = item.answerImages ? [...item.answerImages] : (item.answerImage ? [item.answerImage] : []);
+    
+    editLottieDataQ = item.lottieDataQ ? JSON.parse(JSON.stringify(item.lottieDataQ)) : (item.lottieData ? JSON.parse(JSON.stringify(item.lottieData)) : null);
+    editLottieDataA = item.lottieDataA ? JSON.parse(JSON.stringify(item.lottieDataA)) : null;
     
     let html = '<div class="modal-overlay" onclick="if(event.target===this)closeModal()">' +
         '<div class="modal-card" style="max-height: 90vh; overflow-y: auto;">' +
@@ -1491,7 +1546,6 @@ function openEditModal(gName, idx) {
         '<label style="font-size:0.82rem; color:var(--text-muted); display:block; margin-top:10px;">Testo Domanda</label>' +
         '<textarea id="edit-q" rows="3" placeholder="Domanda...">' + (item.q || '').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</textarea>';
     
-    // Sezione Immagini Domanda nella Modale di Modifica
     html += '<div style="margin-top: 15px;">' +
         '<label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Immagini Domanda:</label>' +
         '<div style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 10px 16px; background: rgba(15,23,42,0.9); border: 1px solid var(--glass-border); border-radius: 12px; color: var(--text-main);">' +
@@ -1502,6 +1556,17 @@ function openEditModal(gName, idx) {
         '<button type="button" onclick="clearAllEditImages(\'q\')" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; cursor: pointer; font-size: 0.8rem; padding: 6px 10px; border-radius: 8px;" title="Rimuovi tutte">Rimuovi tutte</button>' +
         '</div>' +
         '<div id="preview-container-edit-q" style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;"></div>' +
+        '</div>';
+
+    html += '<div style="margin-top: 15px;">' +
+        '<label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Animazione Lottie Domanda (.json):</label>' +
+        '<div style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 10px 16px; background: rgba(15,23,42,0.9); border: 1px solid var(--glass-border); border-radius: 12px; color: var(--text-main);">' +
+        '<label style="cursor: pointer; display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 0;">' +
+        '🎬 <span id="file-text-edit-lottie-q" style="opacity: 0.85; font-size: 0.9rem;">' + (editLottieDataQ ? '<strong style="color:var(--success);">Presente</strong>' : 'Carica JSON...') + '</span>' +
+        '<input type="file" id="edit-lottie-file-q" accept=".json" style="display: none;" onchange="handleLottieSelection(this, \'q\', \'edit\')">' +
+        '</label>' +
+        '<button type="button" onclick="clearLottieFile(\'q\', \'edit\')" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; cursor: pointer; font-size: 0.8rem; padding: 6px 10px; border-radius: 8px;" title="Rimuovi">Rimuovi</button>' +
+        '</div>' +
         '</div>';
 
     if (isQuiz) {
@@ -1519,7 +1584,6 @@ function openEditModal(gName, idx) {
         html += '<label style="font-size:0.82rem; color:var(--text-muted); display:block; margin-top:10px;">Risposta / Svolgimento</label>' +
             '<textarea id="edit-a" rows="3" placeholder="Risposta...">' + (item.a || '').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</textarea>';
         
-        // Sezione Immagini Risposta/Svolgimento nella Modale di Modifica
         html += '<div style="margin-top: 15px;">' +
             '<label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Immagini Risposta / Svolgimento:</label>' +
             '<div style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 10px 16px; background: rgba(15,23,42,0.9); border: 1px solid var(--glass-border); border-radius: 12px; color: var(--text-main);">' +
@@ -1531,6 +1595,17 @@ function openEditModal(gName, idx) {
             '</div>' +
             '<div id="preview-container-edit-a" style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;"></div>' +
             '</div>';
+
+        html += '<div style="margin-top: 15px;">' +
+            '<label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Animazione Lottie Risposta / Svolgimento (.json):</label>' +
+            '<div style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 10px 16px; background: rgba(15,23,42,0.9); border: 1px solid var(--glass-border); border-radius: 12px; color: var(--text-main);">' +
+            '<label style="cursor: pointer; display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 0;">' +
+            '🎬 <span id="file-text-edit-lottie-a" style="opacity: 0.85; font-size: 0.9rem;">' + (editLottieDataA ? '<strong style="color:var(--success);">Presente</strong>' : 'Carica JSON...') + '</span>' +
+            '<input type="file" id="edit-lottie-file-a" accept=".json" style="display: none;" onchange="handleLottieSelection(this, \'a\', \'edit\')">' +
+            '</label>' +
+            '<button type="button" onclick="clearLottieFile(\'a\', \'edit\')" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; cursor: pointer; font-size: 0.8rem; padding: 6px 10px; border-radius: 8px;" title="Rimuovi">Rimuovi</button>' +
+            '</div>' +
+            '</div>';
     }
 
     html += '<div style="margin-top:24px; display:flex; gap:10px;">' +
@@ -1540,13 +1615,12 @@ function openEditModal(gName, idx) {
 
     document.getElementById('modal-root').innerHTML = html;
 
-    // Renderizza le anteprime iniziali delle immagini esistenti
     renderEditImagePreviews('q');
     renderEditImagePreviews('a');
 }
 
 function saveEditedQuestion(oldGName, idx) {
-   const item = db[currentS].groups[oldGName][idx];
+    const item = db[currentS].groups[oldGName][idx];
     const newGName = document.getElementById('edit-group').value.trim() || oldGName;
     const newQ = document.getElementById('edit-q').value.trim();
     
@@ -1557,14 +1631,20 @@ function saveEditedQuestion(oldGName, idx) {
 
     item.q = newQ;
 
-    // Salva le immagini della domanda modificate
     if (editImagesQ.length > 0) {
         item.images = [...editImagesQ];
-        item.image = editImagesQ[0]; // Retrocompatibilità
+        item.image = editImagesQ[0];
     } else {
         delete item.images;
         delete item.image;
     }
+
+    if (editLottieDataQ !== null) item.lottieDataQ = editLottieDataQ; else delete item.lottieDataQ;
+    if (editLottieDataA !== null) item.lottieDataA = editLottieDataA; else delete item.lottieDataA;
+    delete item.lottieData;
+
+    editLottieDataQ = null;
+    editLottieDataA = null;
 
     if (item.type === 'quiz') {
         const optTexts = document.querySelectorAll('.edit-opt-text');
@@ -1581,10 +1661,9 @@ function saveEditedQuestion(oldGName, idx) {
         const editA = document.getElementById('edit-a');
         if (editA) item.a = editA.value;
 
-        // Salva le immagini della risposta/svolgimento modificate
         if (editImagesA.length > 0) {
             item.answerImages = [...editImagesA];
-            item.answerImage = editImagesA[0]; // Retrocompatibilità
+            item.answerImage = editImagesA[0];
         } else {
             delete item.answerImages;
             delete item.answerImage;
