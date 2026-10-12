@@ -8,15 +8,16 @@
     <link rel="stylesheet" href="style.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎓</text></svg>">
     <!-- KaTeX CSS -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
 
-<!-- KaTeX JS (Defer per caricarlo in modo ottimizzato) -->
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <!-- KaTeX JS (Defer per caricarlo in modo ottimizzato) -->
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
 
-<!-- KaTeX Auto-render Extension -->
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+    <!-- KaTeX Auto-render Extension -->
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+
     <!-- Lottie Web Player CDN -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
 </head>
 <body>
 
@@ -158,11 +159,10 @@
         <div id="stats-content" class="exercise-card"></div>
     </div>
 
-    <!-- MANAGER (Interfaccia Migliorata e Ottimizzata) -->
+    <!-- MANAGER -->
     <div id="view-manager" class="view">
         <button class="btn btn-back" onclick="showView('view-subject-menu')">&#8592; Indietro</button>
         
-        <!-- Pannello Sincronizzazione e Backup -->
         <div class="panel" style="margin-top:20px; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid var(--glass-border); border-radius: 20px; padding: 24px;">
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
                 <span style="font-size: 1.3rem;">🔗</span>
@@ -181,7 +181,6 @@
             </div>
         </div>
 
-        <!-- Pannello Aggiunta Manuale -->
         <div class="panel" style="background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid var(--glass-border); border-radius: 20px; padding: 24px; margin-top: 20px;">
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
                 <span style="font-size: 1.3rem;">➕</span>
@@ -201,35 +200,31 @@
             
             <textarea id="add-q" placeholder="Testo domanda o esercizio..." rows="3" style="margin-bottom: 14px;"></textarea>
 
-       <!-- Campo per allegare immagini Domanda -->
-<div style="margin-bottom: 15px;">
-    <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Allega immagini Domanda (opzionali):</label>
-    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 10px 16px; background: rgba(15,23,42,0.9); border: 1px solid var(--glass-border); border-radius: 12px; color: var(--text-main);">
-        <label style="cursor: pointer; display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 0;">
-            📷 <span id="file-text-q" style="opacity: 0.85; font-size: 0.9rem;">Scegli immagini...</span>
-            <input type="file" id="add-image" accept="image/png, image/jpeg, image/webp, image/gif" multiple style="display: none;" onchange="handleImageSelection(this, 'q')">
-        </label>
-        <button type="button" onclick="clearAllImages('q')" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; cursor: pointer; font-size: 0.8rem; padding: 6px 10px; border-radius: 8px;" title="Rimuovi tutte">Rimuovi tutte</button>
-    </div>
-    <!-- Contenitore Anteprime Domanda -->
-    <div id="preview-container-q" style="display: none; gap: 8px; flex-wrap: wrap; margin-top: 10px;"></div>
-</div>
+            <div style="margin-bottom: 15px;">
+                <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Allega immagini Domanda (opzionali):</label>
+                <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 10px 16px; background: rgba(15,23,42,0.9); border: 1px solid var(--glass-border); border-radius: 12px; color: var(--text-main);">
+                    <label style="cursor: pointer; display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 0;">
+                        📷 <span id="file-text-q" style="opacity: 0.85; font-size: 0.9rem;">Scegli immagini...</span>
+                        <input type="file" id="add-image" accept="image/png, image/jpeg, image/webp, image/gif" multiple style="display: none;" onchange="handleImageSelection(this, 'q')">
+                    </label>
+                    <button type="button" onclick="clearAllImages('q')" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; cursor: pointer; font-size: 0.8rem; padding: 6px 10px; border-radius: 8px;" title="Rimuovi tutte">Rimuovi tutte</button>
+                </div>
+                <div id="preview-container-q" style="display: none; gap: 8px; flex-wrap: wrap; margin-top: 10px;"></div>
+            </div>
             
             <textarea id="add-a" placeholder="Risposta o Svolgimento completo..." rows="3" style="margin-bottom: 14px;"></textarea>
 
-     <!-- Campo per allegare immagini Risposta / Svolgimento -->
-<div style="margin-bottom: 15px;">
-    <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Allega immagini Risposta / Svolgimento (opzionali):</label>
-    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 10px 16px; background: rgba(15,23,42,0.9); border: 1px solid var(--glass-border); border-radius: 12px; color: var(--text-main);">
-        <label style="cursor: pointer; display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 0;">
-            📷 <span id="file-text-a" style="opacity: 0.85; font-size: 0.9rem;">Scegli immagini...</span>
-            <input type="file" id="add-answer-image" accept="image/png, image/jpeg, image/webp, image/gif" multiple style="display: none;" onchange="handleImageSelection(this, 'a')">
-        </label>
-        <button type="button" onclick="clearAllImages('a')" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; cursor: pointer; font-size: 0.8rem; padding: 6px 10px; border-radius: 8px;" title="Rimuovi tutte">Rimuovi tutte</button>
-    </div>
-    <!-- Contenitore Anteprime Risposta -->
-    <div id="preview-container-a" style="display: none; gap: 8px; flex-wrap: wrap; margin-top: 10px;"></div>
-</div>
+            <div style="margin-bottom: 15px;">
+                <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Allega immagini Risposta / Svolgimento (opzionali):</label>
+                <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 10px 16px; background: rgba(15,23,42,0.9); border: 1px solid var(--glass-border); border-radius: 12px; color: var(--text-main);">
+                    <label style="cursor: pointer; display: flex; align-items: center; gap: 8px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 0;">
+                        📷 <span id="file-text-a" style="opacity: 0.85; font-size: 0.9rem;">Scegli immagini...</span>
+                        <input type="file" id="add-answer-image" accept="image/png, image/jpeg, image/webp, image/gif" multiple style="display: none;" onchange="handleImageSelection(this, 'a')">
+                    </label>
+                    <button type="button" onclick="clearAllImages('a')" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; cursor: pointer; font-size: 0.8rem; padding: 6px 10px; border-radius: 8px;" title="Rimuovi tutte">Rimuovi tutte</button>
+                </div>
+                <div id="preview-container-a" style="display: none; gap: 8px; flex-wrap: wrap; margin-top: 10px;"></div>
+            </div>
             
             <div id="quiz-fields" style="display: none; margin-bottom: 15px;">
                 <label style="display:block; font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Opzioni di risposta (spunta la casella se è corretta):</label>
@@ -251,7 +246,6 @@
             <button class="btn" onclick="addManual()" style="margin-top:8px; width: 100%; padding: 14px;">Salva nel Database</button>
         </div>
 
-        <!-- Pannello Importazione / Formattazione -->
         <div class="panel" style="background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid var(--glass-border); border-radius: 20px; padding: 24px; margin-top: 20px; margin-bottom: 40px;">
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
                 <span style="font-size: 1.3rem;">🚀</span>
@@ -270,7 +264,6 @@
     </div>
 </div>
 
-<!-- MODAL ROOT (Indispensabile per le finestre di modifica) -->
 <div id="modal-root"></div>
 
 <script src="app.js"></script>
